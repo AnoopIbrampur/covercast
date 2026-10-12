@@ -9,3 +9,7 @@ __pycache__/
 # so it is never committed. Fetch it yourself (see README) into artifacts/raw/.
 artifacts/raw/
 artifacts/synthetic/
+
+# Real-data predictions carry Recruit's visitor counts, which the competition
+# rules don't allow redistributing. Summaries and figures are fine.
+artifacts/results/recruit*/predictions.csv.gz

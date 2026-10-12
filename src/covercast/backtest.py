@@ -186,3 +186,34 @@ def store_bootstrap(
     draws = stat(idx)
     lo, hi = np.percentile(draws, [2.5, 97.5])
     return {"diff": float(point), "ci_low": float(lo), "ci_high": float(hi)}
+
+
+def segment_table(pred: pd.DataFrame, costs: StaffingCosts) -> pd.DataFrame:
+    """Where the gains come from: stores that take bookings vs not, holiday-adjacent days vs normal."""
+    near_holiday = (pred["holiday"] + pred["holiday_prev"] + pred["holiday_next"]) > 0
+    books = pred["res_share_28"] > 0
+    segments = {
+        "all": np.ones(len(pred), bool),
+        "takes bookings": books,
+        "no bookings": ~books,
+        "holiday or next to one": near_holiday,
+        "other days": ~near_holiday,
+    }
+    rows = []
+    for name, m in segments.items():
+        g = pred[np.asarray(m)]
+        base = labor_cost(g["mean4_padded"], g["actual"], costs).sum()
+        quant = labor_cost(g["model_quantile"], g["actual"], costs).sum()
+        rows.append(
+            {
+                "segment": name,
+                "store_days": len(g),
+                "stores": g["store"].nunique(),
+                "rmsle_mean4": rmsle(g["mean4"], g["actual"]),
+                "rmsle_model": rmsle(g["model"], g["actual"]),
+                "cost_mean4_padded": base / (len(g) / 7),
+                "cost_model_quantile": quant / (len(g) / 7),
+                "cost_saving": 1 - quant / base,
+            }
+        )
+    return pd.DataFrame(rows).set_index("segment")

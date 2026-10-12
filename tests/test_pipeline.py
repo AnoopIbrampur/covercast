@@ -36,3 +36,13 @@ def test_backtest_end_to_end(synth_panel, tmp_path):
     # short on roughly a third of days, and far less often than a mean forecast.
     short = summary["staffing"]
     assert short["model_quantile"]["short_day_rate"] < short["model"]["short_day_rate"]
+
+
+def test_report_rebuilds_from_saved_predictions(synth_panel, tmp_path):
+    result = run(synth_panel, n_eval=2, verbose=False)
+    first = report.write(result, tmp_path, "test")
+    again = report.rebuild(tmp_path, "test")
+    assert again["staffing"] == first["staffing"]
+    seg = again["segments"]
+    assert seg["all"]["store_days"] == len(result.predictions)
+    assert seg["takes bookings"]["store_days"] + seg["no bookings"]["store_days"] == seg["all"]["store_days"]

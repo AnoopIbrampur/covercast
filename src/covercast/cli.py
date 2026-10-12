@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from .config import RAW_DIR, RESULTS_DIR, SYNTH_DIR, StaffingCosts
@@ -23,6 +24,10 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--covers-per-hour", type=float, default=StaffingCosts.covers_per_labor_hour)
     b.add_argument("--under-multiplier", type=float, default=StaffingCosts.under_multiplier)
 
+    r = sub.add_parser("report", help="rebuild a report from saved predictions, without retraining")
+    r.add_argument("results_dir", type=Path)
+    r.add_argument("--label", default=None)
+
     args = ap.parse_args(argv)
     if args.cmd == "synth":
         from .synthetic import generate
@@ -44,6 +49,12 @@ def main(argv: list[str] | None = None) -> None:
         q = summary["quantile_vs_best_padded_baseline_cost"]
         print(f"quantile model vs {q['baseline']}: {q['diff']:+.2f} $/store-week "
               f"[{q['ci_low']:+.2f}, {q['ci_high']:+.2f}], wins {q['cutoff_wins'][0]}/{q['cutoff_wins'][1]} cutoffs")
+    elif args.cmd == "report":
+        from . import report
+
+        label = args.label or json.loads((args.results_dir / "summary.json").read_text())["label"]
+        report.rebuild(args.results_dir, label)
+        print((args.results_dir / "summary.md").read_text())
 
 
 if __name__ == "__main__":

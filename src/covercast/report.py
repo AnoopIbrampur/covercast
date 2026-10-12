@@ -16,6 +16,7 @@ from .backtest import (  # noqa: E402
     accuracy_table,
     by_horizon,
     per_cutoff_wins,
+    segment_table,
     staffing_table,
     store_bootstrap,
 )
@@ -29,6 +30,7 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
     acc = accuracy_table(pred)
     staff = staffing_table(pred, costs)
     hz = by_horizon(pred)
+    seg = segment_table(pred, costs)
     best_base = acc.loc[["last_week", "mean4"], "rmsle"].idxmin()
     best_staff_base = staff.loc[["last_week_padded", "mean4_padded"], "cost_per_store_week"].idxmin()
 
@@ -51,6 +53,7 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
             **store_bootstrap(pred, "model_quantile", best_staff_base, costs),
             "cutoff_wins": per_cutoff_wins(pred, "model_quantile", best_staff_base, costs),
         },
+        "segments": seg.round(4).to_dict(orient="index"),
         "padding": result.multipliers,
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
@@ -73,6 +76,13 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
         "",
         staff.round(2).to_markdown(),
         "",
+        "## Where it holds",
+        "",
+        "Accuracy vs the average of the last four same weekdays, and labor cost (per store-week) vs that",
+        "baseline with its best padding.",
+        "",
+        seg.round(4).to_markdown(),
+        "",
         "## RMSLE by horizon (days ahead)",
         "",
         hz.round(4).to_markdown(),
@@ -83,6 +93,20 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
     return summary
 
 
+def rebuild(results_dir: Path, label: str) -> dict:
+    """Re-write the report from saved predictions, without retraining anything."""
+    import pandas as pd
+
+    from .config import StaffingCosts
+
+    results_dir = Path(results_dir)
+    old = json.loads((results_dir / "summary.json").read_text())
+    pred = pd.read_csv(results_dir / "predictions.csv.gz", parse_dates=["cutoff", "target_date"])
+    c = old["costs"]
+    costs = StaffingCosts(c["wage"], c["covers_per_labor_hour"], c["under_multiplier"])
+    return write(BacktestResult(pred, costs, old.get("padding", [])), results_dir, label)
+
+
 def _figure(hz, staff, path: Path, label: str) -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
     names = {"last_week": "Same day last week", "mean4": "Avg of last 4 same weekdays", "model": "Model"}
@@ -91,12 +115,13 @@ def _figure(hz, staff, path: Path, label: str) -> None:
     ax1.set_xlabel("Days ahead")
     ax1.set_ylabel("RMSLE (lower is better)")
     ax1.set_title("Forecast error by lead time")
-    ax1.legend(frameon=False)
+    ax1.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=3, fontsize=8)
 
-    order = ["last_week_padded", "mean4_padded", "model_padded", "model_quantile"]
-    labels = ["Last week\n(padded)", "Avg of 4\n(padded)", "Model\n(padded)", "Model\n(quantile)"]
+    order = ["mean4", "model", "mean4_padded", "model_padded", "model_quantile"]
+    labels = ["Avg of 4\nas-is", "Model\nas-is", "Avg of 4\npadded", "Model\npadded", "Model\nquantile"]
+    colors = ["#9aa5b1", "#8fb3f5", "#9aa5b1", "#5b8def", "#1f5fd1"]
     vals = staff.loc[order, "cost_per_store_week"]
-    ax2.bar(labels, vals, color=["#9aa5b1", "#9aa5b1", "#5b8def", "#1f5fd1"])
+    ax2.bar(labels, vals, color=colors)
     for i, v in enumerate(vals):
         ax2.text(i, v, f"${v:,.0f}", ha="center", va="bottom", fontsize=9)
     ax2.set_ylabel("Mis-staffing cost per store-week ($)")
