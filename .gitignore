@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.DS_Store
+
+# Kaggle's Recruit data is redistributable only under the competition rules,
+# so it is never committed. Fetch it yourself (see README) into artifacts/raw/.
+artifacts/raw/
+artifacts/synthetic/
