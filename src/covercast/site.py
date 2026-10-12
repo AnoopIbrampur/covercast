@@ -53,7 +53,7 @@ def _reasons(point, row: pd.DataFrame, avg_party: float) -> list[dict]:
         out.append(
             {
                 "label": "Bookings so far",
-                "detail": f"{known:.0f} covers booked, vs {typical:.1f} usual at {int(r['h'])} days out",
+                "detail": f"{known:.0f} covers booked, vs {typical:.1f} usual at {int(r['h'])} day{'s' if r['h'] > 1 else ''} out",
                 "effect": base - float(np.expm1(mdl.predict_log(point, cf))[0]),
             }
         )

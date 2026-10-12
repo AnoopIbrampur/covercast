@@ -76,7 +76,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--pan
 @media (max-width: 860px) { .daygrid { grid-template-columns: 1fr; } }
 .roster { display: grid; gap: 14px; }
 .roster h3 { font: 600 13px var(--font-body); margin: 0 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.shift { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: center; font: 13px var(--font-data); font-variant-numeric: tabular-nums; }
+.shift { display: grid; grid-template-columns: 8.5em 1fr; white-space: nowrap; gap: 10px; align-items: center; font: 13px var(--font-data); font-variant-numeric: tabular-nums; }
 .track { position: relative; height: 18px; background: var(--accent-faint); border-radius: 4px; }
 .bar { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; background: var(--accent); }
 .bar.base { background: var(--base); }
@@ -268,10 +268,11 @@ footer a { color: var(--accent); }
     const W = 620, H = 260, L = 34, R = 10, T = 10, B = 30, n = HOURS.length;
     const fm = d.schedule.model.floor, fb = d.schedule.baseline.floor;
     const real = state.reveal && d.need_real ? d.need_real : null;
-    const top = Math.max(2, Math.ceil(Math.max(...d.need.p90, ...fm, ...fb, ...(real || [0])) + 0.5));
+    const ax = niceAxis(Math.max(2, Math.ceil(Math.max(...d.need.p90, ...fm, ...fb, ...(real || [0])) + 0.5)), 6);
+    const top = ax.top, tick = Math.max(1, ax.step);
     const x = (i) => L + (i * (W - L - R)) / n, y = (v) => T + (H - T - B) * (1 - v / top);
     const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Hourly staff need and schedules" });
-    for (let t = 0; t <= top; t++) {
+    for (let t = 0; t <= top; t += tick) {
       el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--line"), "stroke-width": 1 }, svg);
       el("text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }, svg).textContent = t;
     }
