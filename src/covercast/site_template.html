@@ -1,346 +1,612 @@
 <title>Covercast Shift Board</title>
 <meta name="description" content="Two weeks of restaurant cover forecasts turned into real shifts, replayed against what happened.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a service-day board. Summary strip on top, the two-week fan chart, then one day opened up as an hourly chart beside its roster. */
+/* Layout: a translucent toolbar over a grouped page. One headline number, the scrubbable two-week chart, then the selected day as an hourly chart beside inset lists. */
 :root {
-  --bg: #f6f7f9;
-  --panel: #ffffff;
-  --ink: #17202b;
-  --muted: #5d6877;
-  --line: #dfe3e9;
-  --accent: #1d5bd8;
-  --accent-soft: #d6e2fb;
-  --accent-faint: #edf2fd;
-  --base: #8a94a3;
-  --short: #c26a00;
-  --short-soft: #fbe9d2;
-  --good: #1f7a4d;
-  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
-  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --radius: 10px;
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --fill: rgba(120, 120, 128, 0.12);
+  --label: #1d1d1f;
+  --label-2: rgba(60, 60, 67, 0.62);
+  --sep: rgba(60, 60, 67, 0.16);
+  --blue: #007aff;
+  --blue-soft: rgba(0, 122, 255, 0.2);
+  --blue-faint: rgba(0, 122, 255, 0.09);
+  --gray: #8e8e93;
+  --orange: #ff9500;
+  --orange-soft: rgba(255, 149, 0, 0.2);
+  --green: #248a3d;
+  --bar: rgba(242, 242, 247, 0.72);
+  --bar-edge: rgba(0, 0, 0, 0.1);
+  --thumb: #ffffff;
+  --thumb-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --radius: 14px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f141b; --panel: #161d27; --ink: #e6ebf2; --muted: #9aa6b6; --line: #2a3441;
-    --accent: #7aa5ff; --accent-soft: #24375c; --accent-faint: #1a2638; --base: #7d8899;
-    --short: #f0a54a; --short-soft: #3d2c16; --good: #5fcf95; color-scheme: dark;
+    --bg: #000000; --card: #1c1c1e; --fill: rgba(118, 118, 128, 0.24);
+    --label: #f5f5f7; --label-2: rgba(235, 235, 245, 0.62); --sep: rgba(84, 84, 88, 0.55);
+    --blue: #0a84ff; --blue-soft: rgba(10, 132, 255, 0.34); --blue-faint: rgba(10, 132, 255, 0.16);
+    --gray: #8e8e93; --orange: #ff9f0a; --orange-soft: rgba(255, 159, 10, 0.24); --green: #30d158;
+    --bar: rgba(22, 22, 24, 0.72); --bar-edge: rgba(255, 255, 255, 0.1); --thumb: #636366;
+    --thumb-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f141b; --panel: #161d27; --ink: #e6ebf2; --muted: #9aa6b6; --line: #2a3441;
-  --accent: #7aa5ff; --accent-soft: #24375c; --accent-faint: #1a2638; --base: #7d8899;
-  --short: #f0a54a; --short-soft: #3d2c16; --good: #5fcf95; color-scheme: dark;
+  --bg: #000000; --card: #1c1c1e; --fill: rgba(118, 118, 128, 0.24);
+  --label: #f5f5f7; --label-2: rgba(235, 235, 245, 0.62); --sep: rgba(84, 84, 88, 0.55);
+  --blue: #0a84ff; --blue-soft: rgba(10, 132, 255, 0.34); --blue-faint: rgba(10, 132, 255, 0.16);
+  --gray: #8e8e93; --orange: #ff9f0a; --orange-soft: rgba(255, 159, 10, 0.24); --green: #30d158;
+  --bar: rgba(22, 22, 24, 0.72); --bar-edge: rgba(255, 255, 255, 0.1); --thumb: #636366;
+  --thumb-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); color-scheme: dark;
 }
+@media (prefers-contrast: more) {
+  :root { --label-2: var(--label); --sep: var(--gray); --bar: var(--bg); --bar-edge: var(--gray); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --bar: var(--bg); }
+}
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); margin: 0; }
-.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 48px; display: grid; gap: 20px; }
-header { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: flex-end; justify-content: space-between; }
-h1 { font: 700 clamp(26px, 4vw, 36px)/1.05 var(--font-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
-.sub { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
-.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-label.ctl { display: grid; gap: 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-select, button { font: 500 14px var(--font-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
-select:focus-visible, button:focus-visible, .day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-button.toggle { cursor: pointer; align-self: end; }
-button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--panel); border-color: var(--accent); }
-.badge { font: 500 12px var(--font-data); padding: 3px 8px; border-radius: 999px; background: var(--accent-faint); color: var(--accent); }
-.badge.synthetic { background: var(--short-soft); color: var(--short); }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--label);
+  font: 400 1rem/1.47 var(--font); letter-spacing: -0.011em;
+  font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-.strip { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 12px; }
-.strip.n6 { --cols: 6; }
-@media (max-width: 1040px) { .strip.n6 { --cols: 3; } }
-@media (max-width: 700px) { .strip, .strip.n6 { --cols: 2; } }
-.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
-.stat .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.stat .v { font: 600 22px var(--font-data); font-variant-numeric: tabular-nums; }
-.stat .n { font-size: 13px; color: var(--muted); }
-.stat .v.good { color: var(--good); }
+/* Toolbar: a material layer the page scrolls under. Its edge appears only once content is beneath it. */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 1px 0 transparent; transition: box-shadow 0.2s ease;
+}
+.bar.scrolled { box-shadow: 0 1px 0 var(--bar-edge); }
+@media (prefers-reduced-transparency: reduce) { .bar { -webkit-backdrop-filter: none; backdrop-filter: none; } }
+.bar-inner {
+  max-width: 72rem; margin: 0 auto; padding-inline: 1.25rem; padding-block: 0.7rem;
+  display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between;
+}
+.ident { display: flex; align-items: baseline; gap: 0.55rem; min-width: 0; }
+.ident b { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.022em; white-space: nowrap; }
+.ident span { color: var(--label-2); font-size: 0.8125rem; white-space: nowrap; }
+.controls { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
 
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; min-width: 0; }
-.panel h2 { font: 700 18px var(--font-display); margin: 0 0 4px; }
-.panel .hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
-.chart { width: 100%; overflow-x: auto; }
-.chart svg { display: block; width: 100%; min-width: 600px; height: auto; }
-#hourly svg { min-width: 380px; }
-.chart text { fill: var(--muted); font: 11px var(--font-data); }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
-.sw { width: 18px; height: 10px; border-radius: 2px; display: inline-block; }
+select {
+  appearance: none; -webkit-appearance: none; font: 500 0.875rem/1.2 var(--font); letter-spacing: -0.01em;
+  color: var(--label); background-color: var(--fill);
+  background-image: linear-gradient(45deg, transparent 50%, var(--label-2) 50%), linear-gradient(135deg, var(--label-2) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size: 5px 5px; background-repeat: no-repeat;
+  border: 0; border-radius: 9px; padding: 0.5rem 1.9rem 0.5rem 0.75rem; max-width: 100%;
+  transition: transform 0.1s ease-out;
+}
+select:active { transform: scale(0.98); }
 
-.daygrid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; }
-@media (max-width: 860px) { .daygrid { grid-template-columns: 1fr; } }
-.roster { display: grid; gap: 14px; }
-.roster h3 { font: 600 13px var(--font-body); margin: 0 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.shift { display: grid; grid-template-columns: 8.5em 1fr; white-space: nowrap; gap: 10px; align-items: center; font: 13px var(--font-data); font-variant-numeric: tabular-nums; }
-.track { position: relative; height: 18px; background: var(--accent-faint); border-radius: 4px; }
-.bar { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; background: var(--accent); }
-.bar.base { background: var(--base); }
-.reasons { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.reasons li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-.reasons li:last-child { border-bottom: 0; }
-.reasons .eff { font: 600 14px var(--font-data); font-variant-numeric: tabular-nums; }
-.reasons .eff.up { color: var(--accent); }
-.reasons .eff.down { color: var(--muted); }
-.reasons .d { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
-.replay { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.replay div { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
-.replay .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.replay .v { font: 600 16px var(--font-data); font-variant-numeric: tabular-nums; }
-.hidden-note { color: var(--muted); font-size: 13px; font-style: italic; }
-footer { color: var(--muted); font-size: 13px; display: grid; gap: 6px; max-width: 80ch; }
-footer a { color: var(--accent); }
-.day { cursor: pointer; }
-@media (prefers-reduced-motion: no-preference) { .bar, .day rect { transition: opacity 0.15s; } }
+/* Segmented control. The thumb rides the same spring as the reveal it controls. */
+.seg {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--fill);
+  border-radius: 9px; padding: 2px; min-width: 15rem; isolation: isolate;
+}
+.seg .thumb {
+  position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px);
+  background: var(--thumb); border-radius: 7px; box-shadow: var(--thumb-shadow); will-change: transform;
+}
+.seg button {
+  font: 500 0.8125rem/1 var(--font); letter-spacing: -0.006em; color: var(--label); background: none; border: 0;
+  padding: 0.5rem 0.75rem; border-radius: 7px; cursor: pointer; transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+  touch-action: manipulation;
+}
+.seg button:active { transform: scale(0.96); opacity: 0.7; }
+.seg button[aria-selected="true"] { font-weight: 600; }
+:focus-visible { outline: 3px solid var(--blue-soft); outline-offset: 2px; border-radius: 9px; }
+
+.wrap { max-width: 72rem; margin: 0 auto; padding-inline: 1.25rem; padding-block: 1.75rem 3rem; display: grid; gap: 1.75rem; }
+
+/* Headline: one number, the thing this page exists to answer. */
+.hero { display: grid; gap: 0.35rem; }
+.eyebrow { margin: 0; color: var(--label-2); font-size: 0.9375rem; letter-spacing: -0.012em; }
+.headline { margin: 0; font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.05; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
+.headline .pos { color: var(--green); }
+.lede { margin: 0; color: var(--label-2); font-size: 1.0625rem; line-height: 1.42; max-width: 62ch; letter-spacing: -0.016em; }
+.chip { display: inline-block; margin-top: 0.35rem; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; color: var(--label-2); background: var(--fill); padding: 0.2rem 0.55rem; border-radius: 99px; justify-self: start; }
+.chip.synthetic { color: var(--orange); background: var(--orange-soft); }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 1rem 1.1rem 0.9rem; min-width: 0; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; margin: 0 0 0.6rem; }
+h2.title { margin: 0; font-size: 1.25rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.024em; text-wrap: balance; }
+.hint { margin: 0 0 0.6rem; color: var(--label-2); font-size: 0.8125rem; letter-spacing: -0.004em; }
+.section-head .hint { margin: 0; }
+
+.chart { width: 100%; overflow-x: auto; overscroll-behavior-x: contain; border-radius: 8px; }
+.chart svg { display: block; width: 100%; height: auto; }
+#fan svg { touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none; }
+.chart text { fill: var(--label-2); font: 500 11px var(--font); letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.chart text.hol { fill: var(--orange); }
+.chart text.sel { fill: var(--blue); font-weight: 700; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; margin-top: 0.6rem; color: var(--label-2); font-size: 0.75rem; letter-spacing: 0; }
+.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.sw { width: 0.9rem; height: 0.55rem; border-radius: 99px; display: inline-block; }
+.sw.line { height: 3px; }
+.sw.dot { width: 0.55rem; }
+
+.day-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 880px) { .day-grid { grid-template-columns: 1fr; } }
+.stack { display: grid; gap: 1.25rem; min-width: 0; }
+
+/* Inset grouped lists, the way Settings groups related rows. */
+.group-label { margin: 0 0 0.4rem 1rem; color: var(--label-2); font-size: 0.8125rem; letter-spacing: -0.004em; }
+.list { background: var(--card); border-radius: var(--radius); overflow: hidden; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.15rem 0.75rem; align-items: center; padding: 0.7rem 1rem; position: relative; }
+.row + .row::before { content: ""; position: absolute; top: 0; left: 1rem; right: 0; height: 1px; background: var(--sep); transform: scaleY(0.5); transform-origin: top; }
+.row .k { font-size: 0.9375rem; letter-spacing: -0.016em; min-width: 0; }
+.row .v { font-size: 0.9375rem; color: var(--label-2); letter-spacing: -0.016em; text-align: right; }
+.row .v.up { color: var(--blue); font-weight: 600; }
+.row .d { grid-column: 1 / -1; color: var(--label-2); font-size: 0.8125rem; letter-spacing: -0.004em; }
+.row.empty .k { color: var(--label-2); font-size: 0.875rem; }
+
+.row.shift { grid-template-columns: 7.5rem minmax(0, 1fr); white-space: nowrap; }
+.row.shift .k { font-size: 0.875rem; }
+.track { position: relative; height: 0.5rem; background: var(--fill); border-radius: 99px; }
+.track i { position: absolute; top: 0; bottom: 0; border-radius: 99px; background: var(--blue); }
+.track.base i { background: var(--gray); }
+.ppl { display: inline-block; min-width: 1.5em; margin-right: 0.4rem; padding: 0 0.35em; border-radius: 99px; background: var(--fill); font-size: 0.75rem; font-weight: 600; text-align: center; line-height: 1.45; }
+
+.replay { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.replay > div { padding: 0.75rem 1rem; position: relative; min-width: 0; }
+.replay > div + div::before { content: ""; position: absolute; left: 0; top: 0.75rem; bottom: 0.75rem; width: 1px; background: var(--sep); transform: scaleX(0.5); }
+.replay .k { font-size: 0.75rem; color: var(--label-2); letter-spacing: 0; }
+.replay .v { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.022em; }
+.replay .v.best { color: var(--green); }
+
+.swap { animation: settle 0.22s ease-out; }
+@keyframes settle { from { opacity: 0.35; } to { opacity: 1; } }
+
+footer { color: var(--label-2); font-size: 0.8125rem; line-height: 1.5; display: grid; gap: 0.5rem; max-width: 72ch; letter-spacing: -0.004em; }
+footer a { color: var(--blue); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .wrap { padding-inline: 1rem; gap: 1.4rem; }
+  .bar-inner { padding-inline: 1rem; }
+  .controls, .seg, select { width: 100%; }
+  .seg { min-width: 0; }
+  .card { padding-inline: 0.85rem; }
+  .replay .v { font-size: 1.125rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01s !important; }
+  .swap { animation: none; }
+}
 </style>
 
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Covercast Shift Board</h1>
-      <p class="sub" id="subtitle"></p>
-    </div>
+<header class="bar" id="bar">
+  <div class="bar-inner">
+    <div class="ident"><b>Shift Board</b><span>Covercast</span></div>
     <div class="controls">
-      <label class="ctl" for="store">Restaurant
-        <select id="store"></select>
-      </label>
-      <button class="toggle" id="reveal" aria-pressed="false" type="button">Show what happened</button>
+      <select id="store" aria-label="Restaurant"></select>
+      <div class="seg" role="tablist" aria-label="View">
+        <span class="thumb" id="thumb"></span>
+        <button role="tab" id="seg-plan" aria-selected="true" type="button">Plan</button>
+        <button role="tab" id="seg-real" aria-selected="false" type="button">What happened</button>
+      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <section class="strip" id="strip" aria-label="Two-week summary"></section>
+<main class="wrap">
+  <section class="hero" aria-live="polite">
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 class="headline" id="headline"></h1>
+    <p class="lede" id="lede"></p>
+    <span class="chip" id="chip"></span>
+  </section>
 
-  <section class="panel">
-    <h2>Next 14 days of covers</h2>
-    <p class="hint">Shaded bands are the forecast range (darker 50%, lighter 80%). The dot is the level the model staffs to. Click a day to open its schedule.</p>
-    <div class="chart" id="fan"></div>
+  <section class="card">
+    <div class="section-head">
+      <h2 class="title">Next 14 days</h2>
+      <p class="hint">Press or drag across the chart to move between days.</p>
+    </div>
+    <div class="chart" id="fan" role="slider" tabindex="0" aria-label="Day" aria-valuemin="1" aria-valuemax="14"></div>
     <div class="legend">
-      <span><i class="sw" style="background:var(--accent-soft)"></i>80% range</span>
-      <span><i class="sw" style="background:var(--accent)"></i>median and staffing level</span>
-      <span><i class="sw" style="background:var(--base)"></i>padded 4-week average</span>
-      <span id="lg-actual" hidden><i class="sw" style="background:var(--ink)"></i>actual covers</span>
+      <span><i class="sw" style="background:var(--blue-faint)"></i>80% range</span>
+      <span><i class="sw" style="background:var(--blue-soft)"></i>50% range</span>
+      <span><i class="sw dot" style="background:var(--blue)"></i>model staffs to</span>
+      <span><i class="sw line" style="background:var(--gray)"></i>padded 4-week average</span>
+      <span id="lg-actual" hidden><i class="sw dot" style="background:var(--label)"></i>actual covers</span>
     </div>
   </section>
 
-  <section class="panel">
-    <h2 id="day-title"></h2>
-    <p class="hint" id="day-hint"></p>
-    <div class="daygrid">
-      <div>
-        <div class="chart" id="hourly"></div>
-        <div class="legend">
-          <span><i class="sw" style="background:var(--accent-soft)"></i>staff needed, 80% range</span>
-          <span><i class="sw" style="background:var(--accent)"></i>model schedule (people on the floor)</span>
-          <span><i class="sw" style="background:var(--base)"></i>4-week-average schedule</span>
-          <span id="lg-need" hidden><i class="sw" style="background:var(--short)"></i>actual need</span>
-        </div>
+  <section class="day-grid">
+    <div class="card">
+      <div class="section-head"><h2 class="title" id="day-title"></h2></div>
+      <p class="hint" id="day-hint"></p>
+      <div class="chart" id="hourly"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue-soft)"></i>staff needed, 80% range</span>
+        <span><i class="sw line" style="background:var(--blue)"></i>model roster</span>
+        <span><i class="sw line" style="background:var(--gray)"></i>4-week-average roster</span>
+        <span id="lg-need" hidden><i class="sw dot" style="background:var(--orange)"></i>actual need</span>
       </div>
-      <div class="roster">
-        <div><h3>Model roster</h3><div id="roster-model"></div></div>
-        <div><h3>4-week-average roster</h3><div id="roster-base"></div></div>
-        <div><h3>Why the forecast moved</h3><ul class="reasons" id="reasons"></ul></div>
-        <div id="replay-box"><h3>Replayed against the real night</h3><div id="replay"></div></div>
-      </div>
+    </div>
+    <div class="stack">
+      <div><p class="group-label">Model roster</p><div class="list" id="roster-model"></div></div>
+      <div><p class="group-label">4-week-average roster</p><div class="list" id="roster-base"></div></div>
+      <div><p class="group-label">Why the forecast moved</p><div class="list" id="reasons"></div></div>
+      <div id="replay-wrap" hidden><p class="group-label" id="replay-label"></p><div class="list replay" id="replay"></div></div>
     </div>
   </section>
 
   <footer id="foot"></footer>
-</div>
+</main>
 
 <script type="application/json" id="data">__DATA__</script>
 <script>
 (function () {
+  "use strict";
   const D = JSON.parse(document.getElementById("data").textContent);
-  const M = D.meta, HOURS = M.hours;
+  const M = D.meta, HOURS = M.hours, NH = HOURS.length;
   const $ = (id) => document.getElementById(id);
   const NS = "http://www.w3.org/2000/svg";
-  let state = { store: -1, day: 0, reveal: false };
-  try { const s = JSON.parse(localStorage.getItem("covercast") || "{}"); Object.assign(state, s, { reveal: false }); } catch (e) {}
-  if (!Number.isInteger(state.store) || state.store < 0 || state.store >= D.stores.length) {
-    // Open on a busy restaurant: that's where schedules diverge and the board has something to show.
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+  // ---- Springs ----------------------------------------------------------------
+  // Apple-style parameters: response (seconds) and damping ratio, critically
+  // damped throughout since nothing here is thrown. A retarget starts from the
+  // presented value and keeps its velocity, so any motion can be interrupted
+  // and redirected mid-flight. Reduced motion snaps straight to the target.
+  const springs = [];
+  let raf = 0, last = 0;
+  function Spring(init, response = 0.38, damping = 1) {
+    const a = [].concat(init);
+    this.x = Float64Array.from(a); this.v = new Float64Array(a.length); this.t = Float64Array.from(a);
+    this.k = Math.pow((2 * Math.PI) / response, 2); this.c = (4 * Math.PI * damping) / response;
+    springs.push(this);
+  }
+  Spring.prototype.to = function (target) {
+    const a = [].concat(target);
+    if (a.length !== this.x.length) { this.x = Float64Array.from(a); this.v = new Float64Array(a.length); this.t = Float64Array.from(a); }
+    else this.t.set(a);
+    if (reduceMotion.matches) this.settle();
+    wake();
+  };
+  Spring.prototype.settle = function () { this.x.set(this.t); this.v.fill(0); };
+  Spring.prototype.step = function (dt) {
+    let moving = false;
+    for (let i = 0; i < this.x.length; i++) {
+      const acc = -this.k * (this.x[i] - this.t[i]) - this.c * this.v[i];
+      this.v[i] += acc * dt; this.x[i] += this.v[i] * dt;
+      if (Math.abs(this.x[i] - this.t[i]) > 1e-3 || Math.abs(this.v[i]) > 1e-3) moving = true;
+      else { this.x[i] = this.t[i]; this.v[i] = 0; }
+    }
+    return moving;
+  };
+  function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } }
+  function tick(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    let moving = false;
+    for (const s of springs) { let m = false; for (let i = 0; i < 4; i++) m = s.step(dt / 4); moving = moving || m; }
+    draw();
+    raf = moving ? requestAnimationFrame(tick) : 0;
+  }
+
+  // ---- State -------------------------------------------------------------------
+  const state = { store: -1, day: 0, reveal: false };
+  try {
+    const s = JSON.parse(localStorage.getItem("covercast") || "{}");
+    if (Number.isInteger(s.store)) state.store = s.store;
+    if (Number.isInteger(s.day)) state.day = s.day;
+  } catch (e) {}
+  if (!(state.store >= 0 && state.store < D.stores.length)) {
+    // Open on a busy restaurant: that's where the rosters diverge.
     const busy = D.stores.findIndex((s) => s.typical >= 30);
     state.store = busy >= 0 ? busy : D.stores.length - 1;
   }
+  const save = () => { try { localStorage.setItem("covercast", JSON.stringify({ store: state.store, day: state.day })); } catch (e) {} };
+  const store = () => D.stores[state.store];
 
+  const zeros = () => new Array(NH).fill(0);
+  const reveal = new Spring(0, 0.42);
+  const sel = new Spring(0, 0.32);
+  const hv = { p10: new Spring(zeros()), p50: new Spring(zeros()), p90: new Spring(zeros()), fm: new Spring(zeros()),
+               fb: new Spring(zeros()), real: new Spring(zeros()), top: new Spring(4) };
+
+  // ---- Helpers -----------------------------------------------------------------
   const clock = (h) => String(h % 24).padStart(2, "0") + ":00";
-  const fmt$ = (v) => "$" + Math.round(v).toLocaleString("en-US");
-  const el = (tag, attrs, parent) => {
-    const e = document.createElementNS(NS, tag);
-    for (const k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  };
+  const money = (v) => "$" + Math.round(v).toLocaleString("en-US");
+  const dateLabel = (iso, opts) => new Date(iso + "T12:00:00").toLocaleDateString("en-US", opts || { weekday: "short", month: "short", day: "numeric" });
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-  const dateLabel = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-
-  function save() { try { localStorage.setItem("covercast", JSON.stringify({ store: state.store, day: state.day })); } catch (e) {} }
-
-  // Axis top and tick step on a 1-2-5 ladder, so every label is a round number the chart reaches.
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const node = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  // Axis top and step on a 1-2-5 ladder so every label is a round number the chart reaches.
   function niceAxis(v, ticks) {
     const raw = Math.max(v, 1) / ticks, p = Math.pow(10, Math.floor(Math.log10(raw)));
     const step = [1, 2, 5, 10].map((m) => m * p).find((s) => s >= raw);
     return { top: Math.ceil(v / step) * step, step };
   }
 
-  // Store picker grouped by volume band.
-  const bands = [["Under 15 covers a day", 0, 15], ["15 to 30", 15, 30], ["30 to 60", 30, 60], ["Over 60", 60, 1e9]];
+  // ---- Store picker --------------------------------------------------------------
+  const bands = [["Under 15 covers a day", 0, 15], ["15 to 30 a day", 15, 30], ["30 to 60 a day", 30, 60], ["Over 60 a day", 60, 1e9]];
   for (const [name, lo, hi] of bands) {
     const og = document.createElement("optgroup"); og.label = name;
-    D.stores.forEach((s, i) => { if (s.typical >= lo && s.typical < hi) { const o = new Option(`${s.id} · ${s.genre} · ~${Math.round(s.typical)}/day`, i); og.appendChild(o); } });
+    D.stores.forEach((s, i) => { if (s.typical >= lo && s.typical < hi) og.appendChild(new Option(`${s.id} · ${s.genre}`, i)); });
     if (og.children.length) $("store").appendChild(og);
   }
 
-  function renderStrip(s) {
-    const days = s.days;
-    const hm = days.reduce((a, d) => a + d.schedule.model.hours, 0), hb = days.reduce((a, d) => a + d.schedule.baseline.hours, 0);
-    const cells = [
-      ["Typical day", `${Math.round(s.typical)}`, "covers, last 4 weeks"],
-      ["Model schedule", `${hm.toFixed(0)} h`, "staff-hours over 14 days"],
-      ["4-week-average schedule", `${hb.toFixed(0)} h`, `padded ×${M.baseline_padding.toFixed(2)}`],
-    ];
-    if (state.reveal) {
-      const known = days.filter((d) => d.replay);
-      const rm = known.reduce((a, d) => a + d.replay.model, 0), rb = known.reduce((a, d) => a + d.replay.baseline, 0), ro = known.reduce((a, d) => a + d.replay.oracle, 0);
-      const saved = rb - rm;
-      cells.push(["Labor cost, model", fmt$(rm), `${fmt$(rm - ro)} above perfect foresight`]);
-      cells.push(["Labor cost, 4-week avg", fmt$(rb), `${fmt$(rb - ro)} above perfect foresight`]);
-      cells.push(saved >= 0
-        ? ["Model saved", fmt$(saved), `over ${known.length} open days`, "good"]
-        : ["Model cost more", fmt$(-saved), `over ${known.length} open days`]);
-    } else {
-      cells.push(["Open hours", s.open_hours ? `${clock(s.open_hours[0])}–${clock(s.open_hours[1])}` : "–", `from ${s.bookings_seen} past bookings + ${s.genre} pattern`]);
+  // ---- Two-week chart: built per store, its moving parts updated per frame -------
+  // Charts are drawn at their real on-screen width so 11px labels stay 11px.
+  const F = { W: 900, H: 250, L: 36, R: 6, T: 10, B: 42 };
+  let fan = null;
+  function buildFan() {
+    const days = store().days, n = days.length;
+    F.W = Math.max(300, Math.round($("fan").clientWidth || 900));
+    F.H = F.W < 560 ? 220 : 250;
+    const compact = F.W < 640;
+    const ax = niceAxis(Math.max(...days.map((d) => Math.max(d.q.p90, d.mean4_padded, d.actual || 0))) * 1.05, 4);
+    const colW = (F.W - F.L - F.R) / n;
+    const x = (i) => F.L + (i + 0.5) * colW, y = (v) => F.T + (F.H - F.T - F.B) * (1 - v / ax.top);
+    const svg = el("svg", { viewBox: `0 0 ${F.W} ${F.H}`, role: "img", "aria-label": "Forecast covers for the next 14 days" });
+    for (let v = 0; v <= ax.top + 1e-9; v += ax.step) {
+      el("line", { x1: F.L, x2: F.W - F.R, y1: y(v), y2: y(v), stroke: css("--sep"), "stroke-width": 1 }, svg);
+      el("text", { x: F.L - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = Math.round(v);
     }
-    $("strip").className = "strip n" + cells.length;
-    $("strip").replaceChildren(...cells.map(([k, v, n, cls]) => {
-      const d = document.createElement("div"); d.className = "stat";
-      d.innerHTML = `<span class="k">${k}</span><span class="v ${cls || ""}">${v}</span><span class="n">${n}</span>`;
-      return d;
-    }));
-  }
-
-  function renderFan(s) {
-    const W = 900, H = 260, L = 44, R = 12, T = 12, B = 40;
-    const days = s.days, n = days.length;
-    const ax = niceAxis(Math.max(...days.map((d) => Math.max(d.q.p90, d.mean4_padded, (state.reveal && d.actual) || 0))) * 1.05, 4), top = ax.top;
-    const x = (i) => L + (i + 0.5) * (W - L - R) / n, y = (v) => T + (H - T - B) * (1 - v / top);
-    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Two-week cover forecast" });
-    for (let v = 0; v <= top + 1e-9; v += ax.step) {
-      el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: css("--line"), "stroke-width": 1 }, svg);
-      el("text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = Math.round(v);
-    }
-    const area = (lo, hi, fill) => {
-      const upper = days.map((d, i) => `${x(i)},${y(d.q[hi])}`), lower = days.map((d, i) => `${x(i)},${y(d.q[lo])}`).reverse();
-      el("polygon", { points: upper.concat(lower).join(" "), fill }, svg);
-    };
-    area("p10", "p90", css("--accent-faint"));
-    area("p25", "p75", css("--accent-soft"));
-    el("polyline", { points: days.map((d, i) => `${x(i)},${y(d.q.p50)}`).join(" "), fill: "none", stroke: css("--accent"), "stroke-width": 2 }, svg);
-    el("polyline", { points: days.map((d, i) => `${x(i)},${y(d.mean4_padded)}`).join(" "), fill: "none", stroke: css("--base"), "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
-    days.forEach((d, i) => {
-      const g = el("g", { class: "day", tabindex: 0, role: "button", "aria-label": `${dateLabel(d.date)}: staff to ${Math.round(d.staff_to)} covers` }, svg);
-      el("rect", { x: x(i) - (W - L - R) / n / 2, y: T, width: (W - L - R) / n, height: H - T - B, fill: i === state.day ? css("--accent") : "transparent", opacity: i === state.day ? 0.08 : 1 }, g);
-      el("circle", { cx: x(i), cy: y(d.staff_to), r: 4.5, fill: css("--accent"), stroke: css("--panel"), "stroke-width": 1.5 }, g);
-      if (state.reveal && d.actual != null) {
-        el("circle", { cx: x(i), cy: y(d.actual), r: 4, fill: css("--ink") }, g);
-      }
-      const lab = el("text", { x: x(i), y: H - B + 16, "text-anchor": "middle" }, g);
-      lab.textContent = d.dow;
-      if (d.holiday) lab.setAttribute("fill", css("--short"));
-      el("text", { x: x(i), y: H - B + 30, "text-anchor": "middle" }, g).textContent = d.date.slice(5).replace("-", "/");
-      const pick = () => { state.day = i; save(); render(); };
-      g.addEventListener("click", pick);
-      g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    const capsule = el("rect", { y: F.T - 4, width: Math.max(4, colW - 4), height: F.H - F.T - F.B + 36, rx: Math.min(10, colW / 2 - 2), fill: css("--blue-faint") }, svg);
+    const band = (lo, hi, fill) => el("polygon", {
+      points: days.map((d, i) => `${x(i)},${y(d.q[hi])}`).concat(days.map((d, i) => `${x(i)},${y(d.q[lo])}`).reverse()).join(" "), fill }, svg);
+    band("p10", "p90", css("--blue-faint"));
+    band("p25", "p75", css("--blue-soft"));
+    el("polyline", { points: days.map((d, i) => `${x(i)},${y(d.q.p50)}`).join(" "), fill: "none", stroke: css("--blue"), "stroke-width": 2, "stroke-linejoin": "round", opacity: 0.55 }, svg);
+    el("polyline", { points: days.map((d, i) => `${x(i)},${y(d.mean4_padded)}`).join(" "), fill: "none", stroke: css("--gray"), "stroke-width": 1.75, "stroke-dasharray": "4 4", "stroke-linejoin": "round" }, svg);
+    days.forEach((d, i) => el("circle", { cx: x(i), cy: y(d.staff_to), r: 4.5, fill: css("--blue"), stroke: css("--card"), "stroke-width": 2 }, svg));
+    const actual = days.map((d, i) => d.actual == null ? null : el("circle", { cx: x(i), r: 4.5, fill: css("--label"), stroke: css("--card"), "stroke-width": 2, opacity: 0 }, svg));
+    const labels = days.map((d, i) => {
+      const t1 = el("text", { x: x(i), y: F.H - F.B + 18, "text-anchor": "middle" }, svg); t1.textContent = compact ? d.dow.slice(0, 2) : d.dow;
+      const t2 = el("text", { x: x(i), y: F.H - F.B + 32, "text-anchor": "middle" }, svg);
+      t2.textContent = compact ? String(+d.date.slice(8)) : d.date.slice(5).replace("-", "/");
+      if (d.holiday) { t1.classList.add("hol"); t2.classList.add("hol"); }
+      return [t1, t2];
     });
+    fan = { svg, y, colW, capsule, actual, labels, days, n };
     $("fan").replaceChildren(svg);
+    $("fan").setAttribute("aria-valuemax", n);
   }
 
-  function step(svg, floor, x, y, stroke, dash) {
-    let p = "";
-    floor.forEach((v, i) => { p += `${i ? "L" : "M"}${x(i)},${y(v)} L${x(i + 1)},${y(v)} `; });
-    el("path", { d: p, fill: "none", stroke, "stroke-width": 2.25, "stroke-dasharray": dash || "" }, svg);
+  // Scrubbing: the selection follows the pointer from the instant it goes down.
+  function dayAt(clientX) {
+    const pt = fan.svg.createSVGPoint(); pt.x = clientX; pt.y = 0;
+    const p = pt.matrixTransform(fan.svg.getScreenCTM().inverse());
+    return Math.max(0, Math.min(fan.n - 1, Math.floor((p.x - F.L) / fan.colW)));
+  }
+  let scrubbing = false;
+  $("fan").addEventListener("pointerdown", (e) => {
+    if (!fan || e.button > 0) return;
+    scrubbing = true; $("fan").setPointerCapture(e.pointerId); selectDay(dayAt(e.clientX));
+  });
+  $("fan").addEventListener("pointermove", (e) => { if (scrubbing) selectDay(dayAt(e.clientX)); });
+  for (const t of ["pointerup", "pointercancel", "lostpointercapture"]) $("fan").addEventListener(t, () => { scrubbing = false; });
+  $("fan").addEventListener("keydown", (e) => {
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowDown: -1, ArrowUp: 1 }[e.key];
+    let to = null;
+    if (step) to = state.day + step; else if (e.key === "Home") to = 0; else if (e.key === "End") to = fan.n - 1;
+    if (to !== null) { e.preventDefault(); selectDay(Math.max(0, Math.min(fan.n - 1, to))); }
+  });
+
+  function markSelected() {
+    fan.labels.forEach(([a, b], j) => { a.classList.toggle("sel", j === state.day); b.classList.toggle("sel", j === state.day); });
+    const d = fan.days[state.day];
+    $("fan").setAttribute("aria-valuenow", state.day + 1);
+    $("fan").setAttribute("aria-valuetext", `${dateLabel(d.date)}, staff for ${Math.round(d.staff_to)} covers`);
+  }
+  function selectDay(i) {
+    if (i === state.day) return;
+    state.day = i; save();
+    sel.to(i); markSelected(); renderDay();
   }
 
-  function renderHourly(d) {
-    const W = 620, H = 260, L = 34, R = 10, T = 10, B = 30, n = HOURS.length;
-    const fm = d.schedule.model.floor, fb = d.schedule.baseline.floor;
-    const real = state.reveal && d.need_real ? d.need_real : null;
-    const ax = niceAxis(Math.max(2, Math.ceil(Math.max(...d.need.p90, ...fm, ...fb, ...(real || [0])) + 0.5)), 6);
-    const top = ax.top, tick = Math.max(1, ax.step);
-    const x = (i) => L + (i * (W - L - R)) / n, y = (v) => T + (H - T - B) * (1 - v / top);
-    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Hourly staff need and schedules" });
-    for (let t = 0; t <= top; t += tick) {
-      el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--line"), "stroke-width": 1 }, svg);
-      el("text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }, svg).textContent = t;
-    }
-    if (real) {
-      real.forEach((v, i) => {
-        if (v > fm[i] + 1e-9) el("rect", { x: x(i), y: y(v), width: x(i + 1) - x(i), height: y(fm[i]) - y(v), fill: css("--short-soft") }, svg);
-      });
-    }
-    d.need.p90.forEach((v, i) => {
-      el("rect", { x: x(i) + 1, y: y(v), width: x(i + 1) - x(i) - 2, height: y(d.need.p10[i]) - y(v), fill: css("--accent-soft"), rx: 2 }, svg);
-      el("line", { x1: x(i) + 3, x2: x(i + 1) - 3, y1: y(d.need.p50[i]), y2: y(d.need.p50[i]), stroke: css("--accent"), "stroke-width": 1.5, opacity: 0.6 }, svg);
-    });
-    step(svg, fm, x, y, css("--accent"));
-    step(svg, fb, x, y, css("--base"), "5 4");
-    if (real) real.forEach((v, i) => { if (v > 0) el("circle", { cx: (x(i) + x(i + 1)) / 2, cy: y(v), r: 3.5, fill: css("--short") }, svg); });
-    HOURS.forEach((h, i) => { if (i % 2 === 0) el("text", { x: x(i), y: H - B + 18, "text-anchor": "middle" }, svg).textContent = clock(h); });
+  // ---- Hourly chart: structure once, attributes per frame -------------------------
+  const Hc = { W: 640, H: 250, L: 28, R: 6, T: 8, B: 28 };
+  let hr = null;
+  function buildHourly() {
+    Hc.W = Math.max(300, Math.round($("hourly").clientWidth || 640));
+    Hc.H = Hc.W < 520 ? 220 : 250;
+    const every = Hc.W < 520 ? 3 : 2;
+    const svg = el("svg", { viewBox: `0 0 ${Hc.W} ${Hc.H}`, role: "img", "aria-label": "Staff needed and scheduled by hour" });
+    const grid = el("g", {}, svg);
+    const xs = (i) => Hc.L + (i * (Hc.W - Hc.L - Hc.R)) / NH;
+    const short = HOURS.map(() => el("rect", { fill: css("--orange-soft"), rx: 2, opacity: 0 }, svg));
+    const bands = HOURS.map(() => el("rect", { fill: css("--blue-soft"), rx: 4 }, svg));
+    const meds = HOURS.map(() => el("line", { stroke: css("--blue"), "stroke-width": 1.5, "stroke-linecap": "round" }, svg));
+    const pm = el("path", { fill: "none", stroke: css("--blue"), "stroke-width": 2.5, "stroke-linejoin": "round" }, svg);
+    const pb = el("path", { fill: "none", stroke: css("--gray"), "stroke-width": 2, "stroke-dasharray": "4 4", "stroke-linejoin": "round" }, svg);
+    const dots = HOURS.map(() => el("circle", { r: 3.5, fill: css("--orange"), opacity: 0 }, svg));
+    HOURS.forEach((h, i) => { if (i % every === 0) el("text", { x: xs(i), y: Hc.H - Hc.B + 18, "text-anchor": "middle" }, svg).textContent = clock(h); });
+    hr = { grid, xs, short, bands, meds, pm, pb, dots, gridKey: "" };
     $("hourly").replaceChildren(svg);
   }
+  function drawHourly() {
+    const top = hv.top.x[0], r = reveal.x[0], xs = hr.xs, w = xs(1) - xs(0);
+    const y = (v) => Hc.T + (Hc.H - Hc.T - Hc.B) * (1 - v / top);
+    const tick = Math.max(1, niceAxis(hv.top.t[0], 5).step), key = `${top.toFixed(3)}|${tick}`;
+    if (key !== hr.gridKey) {
+      hr.gridKey = key; hr.grid.replaceChildren();
+      for (let v = 0; v <= top + 1e-6; v += tick) {
+        el("line", { x1: Hc.L, x2: Hc.W - Hc.R, y1: y(v), y2: y(v), stroke: css("--sep"), "stroke-width": 1 }, hr.grid);
+        el("text", { x: Hc.L - 7, y: y(v) + 4, "text-anchor": "end" }, hr.grid).textContent = v;
+      }
+    }
+    const p10 = hv.p10.x, p50 = hv.p50.x, p90 = hv.p90.x, fm = hv.fm.x, fb = hv.fb.x, real = hv.real.x;
+    let dm = "", db = "";
+    for (let i = 0; i < NH; i++) {
+      const b = hr.bands[i], lo = Math.min(p10[i], p90[i]), hi = Math.max(p10[i], p90[i]);
+      b.setAttribute("x", xs(i) + 2); b.setAttribute("width", w - 4);
+      b.setAttribute("y", y(hi)); b.setAttribute("height", Math.max(0, y(lo) - y(hi)));
+      const m = hr.meds[i];
+      m.setAttribute("x1", xs(i) + 5); m.setAttribute("x2", xs(i + 1) - 5); m.setAttribute("y1", y(p50[i])); m.setAttribute("y2", y(p50[i]));
+      m.setAttribute("opacity", hi - lo > 0.02 ? 0.55 : 0);
+      dm += `${i ? "L" : "M"}${xs(i)},${y(fm[i])} L${xs(i + 1)},${y(fm[i])} `;
+      db += `${i ? "L" : "M"}${xs(i)},${y(fb[i])} L${xs(i + 1)},${y(fb[i])} `;
+      // Actual need grows out of the model's roster line as the reveal plays,
+      // and any part it overshoots the roster by is the shortfall.
+      const shown = fm[i] + (real[i] - fm[i]) * r, gap = Math.max(0, shown - fm[i]);
+      const dot = hr.dots[i];
+      dot.setAttribute("cx", xs(i) + w / 2); dot.setAttribute("cy", y(shown)); dot.setAttribute("opacity", real[i] > 0.01 ? r : 0);
+      const sh = hr.short[i];
+      sh.setAttribute("x", xs(i) + 1); sh.setAttribute("width", w - 2);
+      sh.setAttribute("y", y(fm[i] + gap)); sh.setAttribute("height", Math.max(0, y(fm[i]) - y(fm[i] + gap))); sh.setAttribute("opacity", r);
+    }
+    hr.pm.setAttribute("d", dm); hr.pb.setAttribute("d", db);
+  }
 
-  function renderRoster(target, shifts, cls) {
-    const span = HOURS[HOURS.length - 1] + 1 - HOURS[0];
-    if (!shifts.length) { $(target).innerHTML = `<p class="hidden-note">Nobody scheduled.</p>`; return; }
-    $(target).replaceChildren(...shifts.map((s) => {
-      const row = document.createElement("div"); row.className = "shift";
-      const left = ((s.start - HOURS[0]) / span) * 100, width = ((s.end - s.start) / span) * 100;
-      row.innerHTML = `<span>${s.people > 1 ? s.people + " × " : ""}${clock(s.start)}–${clock(s.end)}</span><span class="track"><span class="bar ${cls}" style="left:${left}%;width:${width}%"></span></span>`;
-      return row;
+  // ---- Per-frame draw -------------------------------------------------------------
+  function draw() {
+    const r = reveal.x[0];
+    $("thumb").style.transform = `translateX(${r * 100}%)`;
+    if (fan) {
+      fan.capsule.setAttribute("x", F.L + sel.x[0] * fan.colW + 2);
+      fan.days.forEach((d, i) => {
+        const c = fan.actual[i]; if (!c) return;
+        // Each actual point slides out of the forecast median to where the day really landed.
+        c.setAttribute("cy", fan.y(d.q.p50 + (d.actual - d.q.p50) * r));
+        c.setAttribute("opacity", r);
+      });
+    }
+    if (hr) drawHourly();
+  }
+
+  // ---- Text panels ------------------------------------------------------------------
+  function renderHero() {
+    const s = store(), days = s.days;
+    $("eyebrow").textContent = `${s.id} · ${s.genre} · ${s.area} · about ${Math.round(s.typical)} covers a day`;
+    $("chip").textContent = M.label;
+    $("chip").classList.toggle("synthetic", M.label.startsWith("synthetic"));
+    const h = $("headline");
+    if (!state.reveal) {
+      const hm = days.reduce((a, d) => a + d.schedule.model.hours, 0), hb = days.reduce((a, d) => a + d.schedule.baseline.hours, 0);
+      const diff = Math.round(hb - hm);
+      h.textContent = `${Math.round(hm)} staff-hours`;
+      $("lede").textContent = `Planned for the two weeks after ${dateLabel(M.cutoff, { month: "long", day: "numeric" })}. `
+        + (diff > 0 ? `That's ${diff} fewer than a padded four-week average would book, placed where the forecast expects the rush.`
+           : diff < 0 ? `That's ${-diff} more than a padded four-week average would book, because the forecast expects a busier fortnight.`
+           : `The same total as a padded four-week average, placed by the forecast instead.`);
+      return;
+    }
+    const known = days.filter((d) => d.replay);
+    const rm = known.reduce((a, d) => a + d.replay.model, 0), rb = known.reduce((a, d) => a + d.replay.baseline, 0), ro = known.reduce((a, d) => a + d.replay.oracle, 0);
+    const saved = rb - rm;
+    h.replaceChildren();
+    if (saved >= 0.5) h.append(node("span", "pos", money(saved)), " saved");
+    else if (saved <= -0.5) h.textContent = `${money(-saved)} more`;
+    else h.textContent = "No difference";
+    $("lede").textContent = `Labor plus short-staffing cost over ${known.length} open days: the model's rosters ${money(rm)}, the four-week average's ${money(rb)}. `
+      + `Rosters built knowing exactly what would happen cost ${money(ro)}.`;
+  }
+
+  function rosterRows(target, shifts, cls) {
+    const span = HOURS[NH - 1] + 1 - HOURS[0], box = $(target);
+    if (!shifts.length) { const r = node("div", "row empty"); r.append(node("span", "k", "Nobody scheduled")); box.replaceChildren(r); return; }
+    box.replaceChildren(...shifts.map((s) => {
+      const r = node("div", "row shift"), k = node("span", "k");
+      const p = node("span", "ppl", String(s.people));
+      p.setAttribute("aria-label", `${s.people} ${s.people > 1 ? "people" : "person"}`);
+      k.append(p, `${clock(s.start)}–${clock(s.end)}`);
+      const t = node("span", "track" + (cls ? " " + cls : "")), bar = document.createElement("i");
+      bar.style.left = ((s.start - HOURS[0]) / span) * 100 + "%";
+      bar.style.width = ((s.end - s.start) / span) * 100 + "%";
+      t.append(bar); r.append(k, t); return r;
     }));
   }
 
-  function renderDay(s) {
-    const d = s.days[state.day];
-    $("day-title").textContent = `${dateLabel(d.date)}, ${d.h} day${d.h > 1 ? "s" : ""} out${d.holiday ? " (public holiday)" : ""}`;
-    $("day-hint").textContent = `Forecast median ${Math.round(d.q.p50)} covers, 80% range ${Math.round(d.q.p10)}–${Math.round(d.q.p90)}. The model staffs for ${Math.round(d.staff_to)}, the ${Math.round(M.critical_ratio * 100)}th percentile, because a short staff-hour costs ${M.under_multiplier}× an idle one. The padded 4-week average says ${Math.round(d.mean4_padded)}.`;
-    renderHourly(d);
-    renderRoster("roster-model", d.schedule.model.shifts, "");
-    renderRoster("roster-base", d.schedule.baseline.shifts, "base");
-    $("reasons").replaceChildren(...d.reasons.map((r) => {
-      const li = document.createElement("li");
-      const cls = r.effect > 0.05 ? "up" : r.effect < -0.05 ? "down" : "";
-      li.innerHTML = `<span>${r.label}</span><span class="eff ${cls}">${r.effect > 0 ? "+" : ""}${r.effect.toFixed(1)} covers</span>${r.detail ? `<span class="d">${r.detail}</span>` : ""}`;
-      return li;
-    }));
+  function renderReplay() {
+    const d = store().days[state.day];
+    $("replay-wrap").hidden = !state.reveal;
+    if (!state.reveal) return;
     const box = $("replay");
-    if (!state.reveal) box.innerHTML = `<p class="hidden-note">Press “Show what happened” to replay both rosters against the night that actually happened.</p>`;
-    else if (!d.replay) box.innerHTML = `<p class="hidden-note">The restaurant was closed or didn't report this day.</p>`;
-    else box.innerHTML = `<p class="hint">${d.actual} covers came in.</p><div class="replay">
-      <div><div class="k">Model</div><div class="v">${fmt$(d.replay.model)}</div></div>
-      <div><div class="k">4-week avg</div><div class="v">${fmt$(d.replay.baseline)}</div></div>
-      <div><div class="k">Perfect foresight</div><div class="v">${fmt$(d.replay.oracle)}</div></div></div>`;
-    $("lg-actual").hidden = !state.reveal; $("lg-need").hidden = !state.reveal;
+    if (!d.replay) {
+      $("replay-label").textContent = "Replayed against the real day";
+      const r = node("div", "row empty"); r.style.gridColumn = "1 / -1"; r.append(node("span", "k", "Closed, or no report for this day."));
+      box.replaceChildren(r); return;
+    }
+    $("replay-label").textContent = `Replayed against the real day · ${d.actual} covers came in`;
+    const winner = d.replay.model < d.replay.baseline ? "Model" : d.replay.baseline < d.replay.model ? "4-week avg" : null;
+    box.replaceChildren(...[["Model", d.replay.model], ["4-week avg", d.replay.baseline], ["Perfect foresight", d.replay.oracle]].map(([k, v]) => {
+      const c = node("div"); c.append(node("div", "k", k), node("div", "v" + (k === winner ? " best" : ""), money(v))); return c;
+    }));
   }
 
-  function render() {
-    const s = D.stores[state.store];
+  function renderDay() {
+    const d = store().days[state.day];
+    $("day-title").textContent = `${dateLabel(d.date, { weekday: "long", month: "long", day: "numeric" })}${d.holiday ? " · holiday" : ""}`;
+    $("day-hint").textContent = `${d.h} day${d.h > 1 ? "s" : ""} ahead. Forecast ${Math.round(d.q.p50)} covers, 80% range ${Math.round(d.q.p10)}–${Math.round(d.q.p90)}. `
+      + `The model staffs for ${Math.round(d.staff_to)}, its ${Math.round(M.critical_ratio * 100)}th percentile, because a short staff-hour costs ${M.under_multiplier}× an idle one. `
+      + `The padded four-week average says ${Math.round(d.mean4_padded)}.`;
+    rosterRows("roster-model", d.schedule.model.shifts, "");
+    rosterRows("roster-base", d.schedule.baseline.shifts, "base");
+    const reasons = d.reasons.length ? d.reasons : [{ label: "Nothing unusual", effect: 0, detail: "" }];
+    $("reasons").replaceChildren(...reasons.map((x) => {
+      const r = node("div", "row");
+      r.append(node("span", "k", x.label),
+        node("span", "v" + (x.effect > 0.05 ? " up" : ""), `${x.effect > 0 ? "+" : x.effect < 0 ? "−" : ""}${Math.abs(x.effect).toFixed(1)} covers`));
+      if (x.detail) r.append(node("span", "d", x.detail));
+      return r;
+    }));
+    renderReplay();
+    // The hourly chart retargets from wherever it is right now, mid-motion or not.
+    hv.p10.to(d.need.p10); hv.p50.to(d.need.p50); hv.p90.to(d.need.p90);
+    hv.fm.to(d.schedule.model.floor); hv.fb.to(d.schedule.baseline.floor);
+    hv.real.to(d.need_real || zeros());
+    const peak = Math.max(...d.need.p90, ...d.schedule.model.floor, ...d.schedule.baseline.floor, ...(d.need_real || [0]));
+    hv.top.to(niceAxis(Math.max(2, Math.ceil(peak + 0.5)), 5).top);
+  }
+
+  function setReveal(on) {
+    if (on === state.reveal) return;
+    state.reveal = on;
+    $("seg-plan").setAttribute("aria-selected", String(!on));
+    $("seg-real").setAttribute("aria-selected", String(on));
+    $("lg-actual").hidden = !on; $("lg-need").hidden = !on;
+    reveal.to(on ? 1 : 0);
+    renderHero(); renderReplay();
+  }
+
+  function renderStore() {
     $("store").value = state.store;
-    $("subtitle").innerHTML = `${s.id}, ${s.genre} in ${s.area}. Schedules for the two weeks after ${dateLabel(M.cutoff)}, built from data up to that night. <span class="badge ${M.label.startsWith("synthetic") ? "synthetic" : ""}">${M.label}</span>`;
-    renderStrip(s); renderFan(s); renderDay(s);
+    state.day = Math.min(state.day, store().days.length - 1);
+    buildFan();
+    $("fan").classList.remove("swap"); void $("fan").offsetWidth; $("fan").classList.add("swap");
+    sel.to(state.day); sel.settle();
+    markSelected(); renderHero(); renderDay(); draw();
   }
 
-  $("store").addEventListener("change", (e) => { state.store = +e.target.value; state.day = Math.min(state.day, D.stores[state.store].days.length - 1); save(); render(); });
-  $("reveal").addEventListener("click", () => { state.reveal = !state.reveal; $("reveal").setAttribute("aria-pressed", state.reveal); $("reveal").textContent = state.reveal ? "Hide what happened" : "Show what happened"; render(); });
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
-  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  // ---- Wiring --------------------------------------------------------------------------
+  $("store").addEventListener("change", (e) => { state.store = +e.target.value; save(); renderStore(); });
+  // A segmented control commits on press. Keyboard activation arrives as a click with no pointer.
+  $("seg-plan").addEventListener("pointerdown", () => setReveal(false));
+  $("seg-real").addEventListener("pointerdown", () => setReveal(true));
+  $("seg-plan").addEventListener("click", () => setReveal(false));
+  $("seg-real").addEventListener("click", () => setReveal(true));
+  const onScroll = () => $("bar").classList.toggle("scrolled", window.scrollY > 4);
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  // SVG colors are read from the tokens, so rebuild the charts when the theme flips.
+  const retheme = () => { buildFan(); buildHourly(); markSelected(); draw(); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
+  let lastW = 0;
+  new ResizeObserver(() => {
+    const w = Math.round($("fan").clientWidth);
+    if (fan && Math.abs(w - lastW) > 1) { lastW = w; retheme(); }
+  }).observe($("fan"));
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-  $("foot").innerHTML = `<span>Wage $${M.wage}/h, ${M.labor_minutes_per_cover} staff-minutes per cover, minimum crew of ${M.min_crew} whenever the doors are open, shifts of 3–8 hours. Short staff-hours are charged at ${M.under_multiplier}× wage. These are assumptions, not measurements.</span>
-    <span>The hourly arrival pattern comes from when this restaurant's guests booked for, blended with its genre's pattern. “Why” effects re-run the model with one input set to its usual value; they are measured one at a time and don't add up exactly.</span>
+  $("foot").innerHTML = `<span>Wage $${M.wage}/h, ${M.labor_minutes_per_cover} staff-minutes per cover, at least ${M.min_crew} person on the floor whenever the doors are open, shifts of 3–8 hours. A short staff-hour is charged at ${M.under_multiplier}× wage. These are assumptions, not measurements.</span>
+    <span>The hourly pattern comes from when this restaurant's guests booked for, blended with its genre's pattern. Each “why” effect re-runs the model with one input set back to its usual value, so they're measured one at a time and don't add up exactly.</span>
     <span>Method, tests and full results: <a href="https://github.com/AnoopIbrampur/covercast" target="_blank" rel="noopener">github.com/AnoopIbrampur/covercast</a></span>`;
-  render();
+
+  buildHourly();
+  renderStore();
+  // First paint starts at rest on the opening day rather than growing from zero.
+  springs.forEach((s) => s.settle());
+  draw();
 })();
 </script>
