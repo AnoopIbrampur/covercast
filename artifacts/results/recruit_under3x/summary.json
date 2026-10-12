@@ -27,10 +27,10 @@
       "bias": -0.0189
     },
     "model": {
-      "rmsle": 0.4978,
-      "mae_covers": 6.9774,
-      "wape": 0.3227,
-      "bias": -0.1286
+      "rmsle": 0.498,
+      "mae_covers": 6.9735,
+      "wape": 0.3225,
+      "bias": -0.1296
     }
   },
   "staffing": {
@@ -47,10 +47,10 @@
       "short_day_rate": 0.478
     },
     "model": {
-      "cost_per_store_week": 527.19,
-      "idle_hours_per_store_week": 3.671,
-      "short_hours_per_store_week": 8.539,
-      "short_day_rate": 0.577
+      "cost_per_store_week": 527.564,
+      "idle_hours_per_store_week": 3.651,
+      "short_hours_per_store_week": 8.553,
+      "short_day_rate": 0.579
     },
     "last_week_padded": {
       "cost_per_store_week": 539.715,
@@ -65,23 +65,35 @@
       "short_day_rate": 0.313
     },
     "model_padded": {
-      "cost_per_store_week": 399.108,
-      "idle_hours_per_store_week": 12.144,
-      "short_hours_per_store_week": 3.343,
-      "short_day_rate": 0.26
+      "cost_per_store_week": 393.441,
+      "idle_hours_per_store_week": 11.525,
+      "short_hours_per_store_week": 3.444,
+      "short_day_rate": 0.27
     },
     "model_quantile": {
-      "cost_per_store_week": 377.491,
-      "idle_hours_per_store_week": 10.023,
-      "short_hours_per_store_week": 3.65,
-      "short_day_rate": 0.282
+      "cost_per_store_week": 377.764,
+      "idle_hours_per_store_week": 9.955,
+      "short_hours_per_store_week": 3.677,
+      "short_day_rate": 0.285
+    },
+    "mean4_dist": {
+      "cost_per_store_week": 432.936,
+      "idle_hours_per_store_week": 14.469,
+      "short_hours_per_store_week": 3.194,
+      "short_day_rate": 0.243
+    },
+    "model_dist": {
+      "cost_per_store_week": 377.53,
+      "idle_hours_per_store_week": 12.194,
+      "short_hours_per_store_week": 2.927,
+      "short_day_rate": 0.23
     }
   },
   "model_vs_best_baseline_rmsle": {
     "baseline": "mean4",
-    "diff": -0.05605514759003477,
-    "ci_low": -0.06065923685356316,
-    "ci_high": -0.051470151887654504,
+    "diff": -0.05586241202085718,
+    "ci_low": -0.060473285374520805,
+    "ci_high": -0.0512259276520655,
     "cutoff_wins": [
       8,
       8
@@ -89,9 +101,9 @@
   },
   "quantile_vs_best_padded_baseline_cost": {
     "baseline": "mean4_padded",
-    "diff": -48.31645987531022,
-    "ci_low": -53.36571640741417,
-    "ci_high": -43.24415173418597,
+    "diff": -48.0432156064505,
+    "ci_low": -52.82960762140815,
+    "ci_high": -43.05548920348872,
     "cutoff_wins": [
       8,
       8
@@ -102,46 +114,92 @@
       "store_days": 79546,
       "stores": 820,
       "rmsle_mean4": 0.5539,
-      "rmsle_model": 0.4978,
+      "rmsle_model": 0.498,
       "cost_mean4_padded": 425.807,
-      "cost_model_quantile": 377.4905,
-      "cost_saving": 0.1135
+      "cost_model_quantile": 377.7638,
+      "cost_saving": 0.1128
     },
     "takes bookings": {
       "store_days": 27621,
       "stores": 298,
       "rmsle_mean4": 0.5926,
-      "rmsle_model": 0.5163,
+      "rmsle_model": 0.5157,
       "cost_mean4_padded": 504.4308,
-      "cost_model_quantile": 429.9358,
-      "cost_saving": 0.1477
+      "cost_model_quantile": 428.1986,
+      "cost_saving": 0.1511
     },
     "no bookings": {
       "store_days": 51925,
       "stores": 562,
       "rmsle_mean4": 0.5321,
-      "rmsle_model": 0.4877,
+      "rmsle_model": 0.4883,
       "cost_mean4_padded": 383.9838,
-      "cost_model_quantile": 349.5928,
-      "cost_saving": 0.0896
+      "cost_model_quantile": 350.9355,
+      "cost_saving": 0.0861
     },
     "holiday or next to one": {
       "store_days": 3690,
       "stores": 802,
       "rmsle_mean4": 0.6635,
-      "rmsle_model": 0.5685,
+      "rmsle_model": 0.5704,
       "cost_mean4_padded": 630.3368,
-      "cost_model_quantile": 478.8638,
-      "cost_saving": 0.2403
+      "cost_model_quantile": 486.4289,
+      "cost_saving": 0.2283
     },
     "other days": {
       "store_days": 75856,
       "stores": 820,
       "rmsle_mean4": 0.548,
-      "rmsle_model": 0.4941,
+      "rmsle_model": 0.4942,
       "cost_mean4_padded": 415.8577,
-      "cost_model_quantile": 372.5593,
-      "cost_saving": 0.1041
+      "cost_model_quantile": 372.4778,
+      "cost_saving": 0.1043
+    }
+  },
+  "distribution": {
+    "mean4": {
+      "mean_pinball_covers": 2.9289,
+      "coverage@0.05": 0.0537,
+      "coverage@0.1": 0.1063,
+      "coverage@0.15": 0.1565,
+      "coverage@0.2": 0.2065,
+      "coverage@0.25": 0.2592,
+      "coverage@0.3": 0.3111,
+      "coverage@0.35": 0.3613,
+      "coverage@0.4": 0.4114,
+      "coverage@0.45": 0.4614,
+      "coverage@0.5": 0.5117,
+      "coverage@0.55": 0.5625,
+      "coverage@0.6": 0.6106,
+      "coverage@0.65": 0.6592,
+      "coverage@0.7": 0.7084,
+      "coverage@0.75": 0.7575,
+      "coverage@0.8": 0.8062,
+      "coverage@0.85": 0.8544,
+      "coverage@0.9": 0.9012,
+      "coverage@0.95": 0.9494
+    },
+    "model": {
+      "mean_pinball_covers": 2.5776,
+      "coverage@0.05": 0.0558,
+      "coverage@0.1": 0.1078,
+      "coverage@0.15": 0.1603,
+      "coverage@0.2": 0.2141,
+      "coverage@0.25": 0.2682,
+      "coverage@0.3": 0.321,
+      "coverage@0.35": 0.3748,
+      "coverage@0.4": 0.4267,
+      "coverage@0.45": 0.4783,
+      "coverage@0.5": 0.5284,
+      "coverage@0.55": 0.5777,
+      "coverage@0.6": 0.6263,
+      "coverage@0.65": 0.6745,
+      "coverage@0.7": 0.7228,
+      "coverage@0.75": 0.7705,
+      "coverage@0.8": 0.8158,
+      "coverage@0.85": 0.8618,
+      "coverage@0.9": 0.9089,
+      "coverage@0.95": 0.954
     }
   },
   "padding": [
@@ -149,49 +207,49 @@
       "cutoff": "2017-02-18",
       "last_week": 1.19,
       "mean4": 1.21,
-      "model": 1.34
+      "model": 1.38
     },
     {
       "cutoff": "2017-02-25",
       "last_week": 1.2,
       "mean4": 1.21,
-      "model": 1.34
+      "model": 1.38
     },
     {
       "cutoff": "2017-03-04",
       "last_week": 1.2,
       "mean4": 1.21,
-      "model": 1.35
+      "model": 1.39
     },
     {
       "cutoff": "2017-03-11",
       "last_week": 1.2,
       "mean4": 1.21,
-      "model": 1.42
+      "model": 1.4
     },
     {
       "cutoff": "2017-03-18",
       "last_week": 1.2,
       "mean4": 1.21,
-      "model": 1.47
+      "model": 1.41
     },
     {
       "cutoff": "2017-03-25",
       "last_week": 1.2,
       "mean4": 1.21,
-      "model": 1.47
+      "model": 1.4
     },
     {
       "cutoff": "2017-04-01",
       "last_week": 1.2,
       "mean4": 1.22,
-      "model": 1.46
+      "model": 1.4
     },
     {
       "cutoff": "2017-04-08",
       "last_week": 1.2,
       "mean4": 1.22,
-      "model": 1.45
+      "model": 1.39
     }
   ]
 }

@@ -1,0 +1,110 @@
+{
+  "label": "Recruit (Kaggle) data",
+  "params": {
+    "wage": 18.0,
+    "labor_minutes_per_cover": 15.0,
+    "under_multiplier": 2.0,
+    "min_crew": 1,
+    "shift_lengths": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "n_scenarios": 200,
+    "profile_shrinkage": 50.0,
+    "open_share": 0.01
+  },
+  "store_days": 79546,
+  "stores": 820,
+  "per_store_week": {
+    "mean4_padded": {
+      "total_cost": 1742.499,
+      "scheduled_hours": 87.662,
+      "short_staff_hours": 4.572,
+      "excess_over_oracle": 86.09
+    },
+    "model_padded": {
+      "total_cost": 1737.979,
+      "scheduled_hours": 88.272,
+      "short_staff_hours": 4.141,
+      "excess_over_oracle": 81.571
+    },
+    "mean4_dist": {
+      "total_cost": 1735.244,
+      "scheduled_hours": 85.493,
+      "short_staff_hours": 5.455,
+      "excess_over_oracle": 78.836
+    },
+    "model_dist": {
+      "total_cost": 1726.279,
+      "scheduled_hours": 84.906,
+      "short_staff_hours": 5.499,
+      "excess_over_oracle": 69.871
+    },
+    "oracle": {
+      "total_cost": 1656.408,
+      "scheduled_hours": 87.636,
+      "short_staff_hours": 2.193,
+      "excess_over_oracle": 0.0
+    }
+  },
+  "by_volume": {
+    "<15 covers/day": {
+      "store_days": 36616,
+      "stores": 457,
+      "mean4_padded": 27.4472,
+      "model_padded": 23.0607,
+      "mean4_dist": 25.4101,
+      "model_dist": 21.4003,
+      "model_dist_cuts_excess_by": 0.2203
+    },
+    "15-30": {
+      "store_days": 30708,
+      "stores": 425,
+      "mean4_padded": 115.9555,
+      "model_padded": 109.7566,
+      "mean4_dist": 107.0321,
+      "model_dist": 95.0929,
+      "model_dist_cuts_excess_by": 0.1799
+    },
+    "30-60": {
+      "store_days": 11993,
+      "stores": 188,
+      "mean4_padded": 183.4974,
+      "model_padded": 181.4776,
+      "mean4_dist": 165.4085,
+      "model_dist": 147.724,
+      "model_dist_cuts_excess_by": 0.195
+    },
+    "60+": {
+      "store_days": 222,
+      "stores": 5,
+      "mean4_padded": 367.9257,
+      "model_padded": 437.027,
+      "mean4_dist": 315.9932,
+      "model_dist": 370.3378,
+      "model_dist_cuts_excess_by": -0.0066
+    }
+  },
+  "model_dist_vs_mean4_padded": {
+    "diff": -16.219256782239206,
+    "ci_low": -18.5428514439272,
+    "ci_high": -14.087362802259507,
+    "cutoff_wins": [
+      8,
+      8
+    ]
+  },
+  "model_dist_vs_model_padded": {
+    "diff": -11.700135770497573,
+    "ci_low": -13.140583991678048,
+    "ci_high": -10.310596725054651,
+    "cutoff_wins": [
+      8,
+      8
+    ]
+  }
+}

@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .config import RAW_DIR, RESULTS_DIR, SYNTH_DIR, StaffingCosts
+from .config import RAW_DIR, RESULTS_DIR, ROOT, SYNTH_DIR, StaffingCosts
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -27,6 +27,18 @@ def main(argv: list[str] | None = None) -> None:
     r = sub.add_parser("report", help="rebuild a report from saved predictions, without retraining")
     r.add_argument("results_dir", type=Path)
     r.add_argument("--label", default=None)
+
+    sc = sub.add_parser("schedule", help="shift-level backtest on a finished backtest's forecasts")
+    sc.add_argument("results_dir", type=Path)
+    sc.add_argument("--data-dir", type=Path, default=RAW_DIR)
+    sc.add_argument("--stores", type=int, default=None, help="random subset of stores (default: all)")
+    sc.add_argument("--min-crew", type=int, default=1)
+    sc.add_argument("--workers", type=int, default=None)
+
+    st = sub.add_parser("site", help="build the dashboard from a finished backtest")
+    st.add_argument("results_dir", type=Path)
+    st.add_argument("--data-dir", type=Path, default=SYNTH_DIR)
+    st.add_argument("--out", type=Path, default=None)
 
     args = ap.parse_args(argv)
     if args.cmd == "synth":
@@ -55,6 +67,39 @@ def main(argv: list[str] | None = None) -> None:
         label = args.label or json.loads((args.results_dir / "summary.json").read_text())["label"]
         report.rebuild(args.results_dir, label)
         print((args.results_dir / "summary.md").read_text())
+    elif args.cmd == "schedule":
+        import pandas as pd
+
+        from . import schedule_report
+        from .data import load_panel
+        from .schedule import ScheduleParams
+        from .schedule_eval import run as run_schedules
+
+        old = json.loads((args.results_dir / "summary.json").read_text())
+        c = old["costs"]
+        params = ScheduleParams(
+            wage=c["wage"],
+            labor_minutes_per_cover=60.0 / c["covers_per_labor_hour"],
+            under_multiplier=c["under_multiplier"],
+            min_crew=args.min_crew,
+        )
+        pred = pd.read_csv(args.results_dir / "predictions.csv.gz", parse_dates=["cutoff", "target_date"])
+        calibration = json.loads((args.results_dir / "calibration.json").read_text())
+        panel = load_panel(args.data_dir)
+        sched = run_schedules(panel, pred, calibration, params, n_stores=args.stores, workers=args.workers)
+        out = args.results_dir / ("schedule" if args.min_crew == 1 else f"schedule_crew{args.min_crew}")
+        schedule_report.write(sched, params, out, old["label"])
+        print((out / "summary.md").read_text())
+    elif args.cmd == "site":
+        from .data import load_panel
+        from .site import build
+
+        synthetic = "synthetic" in str(args.data_dir)
+        label = "synthetic data" if synthetic else "Recruit (Kaggle) data"
+        # Recruit's per-store counts can't be republished, so only the synthetic
+        # build goes to the public site folder; a real-data build stays local.
+        out = args.out or (ROOT / "site" if synthetic else RESULTS_DIR / "site_recruit")
+        print(f"wrote {build(load_panel(args.data_dir), args.results_dir, out, label)}")
 
 
 if __name__ == "__main__":

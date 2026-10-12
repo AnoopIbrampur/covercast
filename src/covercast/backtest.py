@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
+from . import distribution as dist
 from . import model as mdl
 from .config import HORIZON, StaffingCosts
 from .data import Panel
@@ -22,9 +23,16 @@ from .staffing import best_multiplier, hours_over_under, labor_cost
 # Forecasts judged on accuracy.
 POINT_METHODS = ["last_week", "mean4", "model"]
 # Forecasts judged on staffing cost: each baseline with its best padding, the
-# model's mean forecast with its best padding, and the model asked directly
-# for the cost-minimising quantile.
-STAFF_METHODS = ["last_week_padded", "mean4_padded", "model_padded", "model_quantile"]
+# model's mean forecast with its best padding, the model asked directly for
+# the cost-minimising quantile, and that quantile read off the calibrated
+# distribution (with a no-model distribution around the 4-week average for comparison).
+STAFF_METHODS = ["last_week_padded", "mean4_padded", "model_padded", "model_quantile", "mean4_dist", "model_dist"]
+
+
+# Calibration cutoffs per evaluation (half fit the scale model, half calibrate),
+# and the least history a walk-forward model may be trained on.
+N_HOLDOUT = 8
+MIN_TRAIN_CUTOFFS = 4
 
 
 @dataclass
@@ -33,6 +41,10 @@ class BacktestResult:
     costs: StaffingCosts
     multipliers: list[dict] = field(default_factory=list)
     n_train_rows: list[int] = field(default_factory=list)
+    # Per evaluation cutoff: the z quantile tables for the model and the
+    # baseline distributions. With center_log / scale_log in predictions, these
+    # reproduce any quantile of any forecast.
+    calibration: list[dict] = field(default_factory=list)
 
 
 def run(panel: Panel, n_eval: int = 8, costs: StaffingCosts | None = None, verbose: bool = True) -> BacktestResult:
@@ -43,29 +55,58 @@ def run(panel: Panel, n_eval: int = 8, costs: StaffingCosts | None = None, verbo
     if verbose:
         print(f"built features for {len(all_ci)} cutoffs in {time.time() - t0:.1f}s")
 
-    out, mults, n_rows = [], [], []
+    # Every cutoff that is either evaluated or used to calibrate an evaluation
+    # gets its own walk-forward point model, trained only on cutoffs whose
+    # horizon ended by then. The same fit serves as the evaluation forecast at
+    # one cutoff and as a calibration forecast for later ones.
+    holdouts = {ci: training_cutoffs(all_ci, ci)[-N_HOLDOUT:] for ci in eval_ci}
+    needed = sorted(set(eval_ci).union(*holdouts.values()))
+    wf: dict[int, pd.DataFrame] = {}
+    for c in needed:
+        tc = training_cutoffs(all_ci, c)
+        if len(tc) < MIN_TRAIN_CUTOFFS:
+            continue
+        train = pd.concat([frames[t] for t in tc], ignore_index=True)
+        train = train[train["actual"].notna()]
+        f = frames[c][frames[c]["actual"].notna()].copy()
+        t1 = time.time()
+        f["pred_log"] = mdl.predict_log(mdl.fit(train), f)
+        wf[c] = f
+        if verbose:
+            print(f"walk-forward fit for {panel.dates[c].date()}: {len(train):,} rows, {time.time() - t1:.1f}s")
+
+    out, mults, n_rows, calib = [], [], [], []
     for ci in eval_ci:
+        if ci not in wf or not all(h in wf for h in holdouts[ci]) or len(holdouts[ci]) < N_HOLDOUT:
+            continue
         train = pd.concat([frames[c] for c in training_cutoffs(all_ci, ci)], ignore_index=True)
         train = train[train["actual"].notna()]
-        test = frames[ci][frames[ci]["actual"].notna()].copy()
-        if train.empty or test.empty:
-            continue
+        hold = pd.concat([wf[h] for h in holdouts[ci]], ignore_index=True)
+        test = wf[ci].copy()
 
         t1 = time.time()
-        point = mdl.fit(train)
+        cal = dist.calibrate(hold)
+        base_z = dist.baseline_z_quantiles(hold)
         quant = mdl.fit(train, quantile=costs.critical_ratio)
-        # In-sample model forecasts would be overfit, so the model's padding is
-        # tuned on its last eight training cutoffs using a model that never saw them.
-        model_k = _model_padding(train, costs)
 
-        test["model"] = mdl.predict(point, test)
+        test["center_log"] = test.pop("pred_log")
+        test["scale_log"] = cal.scale(test)
+        test["model"] = np.clip(np.expm1(test["center_log"]), 0, None)
         test["model_quantile"] = mdl.predict(quant, test)
+        q = costs.critical_ratio
+        test["model_dist"] = dist.quantiles(test["center_log"].to_numpy(), test["scale_log"].to_numpy(), cal.z_quantiles, q)[:, 0]
+        test["mean4_dist"] = dist.quantiles(np.log1p(test["mean4"].to_numpy()), np.ones(len(test)), base_z, q)[:, 0]
+
+        # Padding is tuned on past data only: the baselines on all training
+        # rows, the model on its holdout cutoffs' walk-forward forecasts.
         k = {b: best_multiplier(train[b], train["actual"], costs) for b in ("last_week", "mean4")}
-        k["model"] = model_k
+        k["model"] = best_multiplier(cal.holdout_forecasts["forecast"], cal.holdout_forecasts["actual"], costs)
         for b in ("last_week", "mean4", "model"):
             test[f"{b}_padded"] = k[b] * test[b]
         out.append(test)
-        mults.append({"cutoff": panel.dates[ci].date().isoformat(), **k})
+        cutoff = panel.dates[ci].date().isoformat()
+        mults.append({"cutoff": cutoff, **k})
+        calib.append({"cutoff": cutoff, "model_z": cal.z_quantiles.tolist(), "mean4_z": base_z.tolist()})
         n_rows.append(len(train))
         if verbose:
             print(
@@ -73,26 +114,12 @@ def run(panel: Panel, n_eval: int = 8, costs: StaffingCosts | None = None, verbo
                 f"test {len(test):,}, padding {k}, {time.time() - t1:.1f}s"
             )
 
-    return BacktestResult(pd.concat(out, ignore_index=True), costs, mults, n_rows)
+    return BacktestResult(pd.concat(out, ignore_index=True), costs, mults, n_rows, calib)
 
 
 def training_cutoffs(all_ci: list[int], eval_ci: int, horizon: int = HORIZON) -> list[int]:
     """Earlier cutoffs whose every target day is on or before the evaluation cutoff."""
     return [c for c in all_ci if c + horizon <= eval_ci]
-
-
-def _model_padding(train: pd.DataFrame, costs: StaffingCosts, n_holdout: int = 8) -> float:
-    cutoffs = np.sort(train["cutoff"].unique())
-    if len(cutoffs) <= n_holdout + 4:
-        return 1.0
-    split = cutoffs[-n_holdout]
-    # Same rule as the outer loop: an inner training row's whole horizon must
-    # be over before the holdout starts.
-    inner = train[train["cutoff"] + pd.Timedelta(days=HORIZON) <= split]
-    hold = train[train["cutoff"] >= split]
-    if inner.empty or hold.empty:
-        return 1.0
-    return best_multiplier(mdl.predict(mdl.fit(inner), hold), hold["actual"], costs)
 
 
 def rmsle(f: np.ndarray, a: np.ndarray) -> float:
@@ -217,3 +244,35 @@ def segment_table(pred: pd.DataFrame, costs: StaffingCosts) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows).set_index("segment")
+
+
+DIST_LEVELS = np.round(np.arange(0.05, 0.96, 0.05), 2)
+
+
+def distribution_table(pred: pd.DataFrame, calibration: list[dict]) -> pd.DataFrame:
+    """Calibration and sharpness of the model's distribution vs the no-model one.
+
+    coverage@q is the share of days that came in at or under the q-quantile;
+    a calibrated forecast has coverage@q = q. Mean pinball loss averaged over
+    the 19 levels approximates CRPS, in covers: lower means sharper and still honest.
+    """
+    by_cut = {c["cutoff"]: c for c in calibration}
+    rows = {m: {"pinball": [], **{f"coverage@{q:g}": [] for q in DIST_LEVELS}} for m in ("mean4", "model")}
+    for cutoff, g in pred.groupby("cutoff"):
+        c = by_cut[pd.Timestamp(cutoff).date().isoformat()]
+        a = g["actual"].to_numpy()
+        qs = {
+            "model": dist.quantiles(g["center_log"].to_numpy(), g["scale_log"].to_numpy(), np.array(c["model_z"]), DIST_LEVELS),
+            "mean4": dist.quantiles(np.log1p(g["mean4"].to_numpy()), np.ones(len(g)), np.array(c["mean4_z"]), DIST_LEVELS),
+        }
+        for m, Q in qs.items():
+            rows[m]["pinball"].append(np.mean([dist.pinball(Q[:, i], a, q).sum() for i, q in enumerate(DIST_LEVELS)]))
+            for i, q in enumerate(DIST_LEVELS):
+                rows[m][f"coverage@{q:g}"].append((a <= Q[:, i]).sum())
+    n = len(pred)
+    out = {}
+    for m, r in rows.items():
+        out[m] = {"mean_pinball_covers": float(np.sum(r["pinball"]) / n)}
+        for q in DIST_LEVELS:
+            out[m][f"coverage@{q:g}"] = float(np.sum(r[f"coverage@{q:g}"]) / n)
+    return pd.DataFrame(out).T

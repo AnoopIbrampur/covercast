@@ -49,6 +49,7 @@ class Panel:
     res_visit_day: np.ndarray  # (R,) int
     res_booked_day: np.ndarray  # (R,) int
     res_visitors: np.ndarray  # (R,) float
+    res_visit_hour: np.ndarray  # (R,) int, clock hour the booking is for
 
     @property
     def n_stores(self) -> int:
@@ -116,6 +117,7 @@ def load_panel(data_dir: Path) -> Panel:
         res_visit_day=res["visit_day"].to_numpy(dtype=int),
         res_booked_day=res["booked_day"].to_numpy(dtype=int),
         res_visitors=res["reserve_visitors"].to_numpy(dtype=float),
+        res_visit_hour=res["visit_hour"].to_numpy(dtype=int),
     )
 
 
@@ -133,7 +135,8 @@ def _load_reservations(data_dir: Path, s_index: dict[str, int], origin: pd.Times
 
     res["store"] = res["air_store_id"].map(s_index)
     res = res.dropna(subset=["store"])
-    visit = _parse_ts(res["visit_datetime"]).dt.normalize()
+    visit_ts = _parse_ts(res["visit_datetime"])
+    visit = visit_ts.dt.normalize()
     booked = _parse_ts(res["reserve_datetime"]).dt.normalize()
     out = pd.DataFrame(
         {
@@ -141,6 +144,7 @@ def _load_reservations(data_dir: Path, s_index: dict[str, int], origin: pd.Times
             "visit_day": (visit - origin).dt.days.to_numpy(),
             "booked_day": (booked - origin).dt.days.to_numpy(),
             "reserve_visitors": res["reserve_visitors"].astype(float).to_numpy(),
+            "visit_hour": visit_ts.dt.hour.to_numpy(),
         }
     )
     # Bookings for days before the visit panel starts can never be a feature.

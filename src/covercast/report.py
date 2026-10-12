@@ -15,6 +15,7 @@ from .backtest import (  # noqa: E402
     BacktestResult,
     accuracy_table,
     by_horizon,
+    distribution_table,
     per_cutoff_wins,
     segment_table,
     staffing_table,
@@ -31,6 +32,7 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
     staff = staffing_table(pred, costs)
     hz = by_horizon(pred)
     seg = segment_table(pred, costs)
+    dtab = distribution_table(pred, result.calibration) if result.calibration else None
     best_base = acc.loc[["last_week", "mean4"], "rmsle"].idxmin()
     best_staff_base = staff.loc[["last_week_padded", "mean4_padded"], "cost_per_store_week"].idxmin()
 
@@ -54,9 +56,11 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
             "cutoff_wins": per_cutoff_wins(pred, "model_quantile", best_staff_base, costs),
         },
         "segments": seg.round(4).to_dict(orient="index"),
+        "distribution": None if dtab is None else dtab.round(4).to_dict(orient="index"),
         "padding": result.multipliers,
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (out_dir / "calibration.json").write_text(json.dumps(result.calibration))
     pred.to_csv(out_dir / "predictions.csv.gz", index=False)
 
     md = [
@@ -83,6 +87,14 @@ def write(result: BacktestResult, out_dir: Path, label: str) -> dict:
         "",
         seg.round(4).to_markdown(),
         "",
+        "## Distribution calibration",
+        "",
+        "coverage@q = share of days at or under the forecast q-quantile (calibrated: equals q).",
+        "Pinball loss averaged over 19 levels from 0.05 to 0.95, in covers (lower is better).",
+        "",
+        "" if dtab is None else dtab[["mean_pinball_covers", "coverage@0.1", "coverage@0.25", "coverage@0.5",
+                                      "coverage@0.75", "coverage@0.9"]].round(3).to_markdown(),
+        "",
         "## RMSLE by horizon (days ahead)",
         "",
         hz.round(4).to_markdown(),
@@ -104,7 +116,9 @@ def rebuild(results_dir: Path, label: str) -> dict:
     pred = pd.read_csv(results_dir / "predictions.csv.gz", parse_dates=["cutoff", "target_date"])
     c = old["costs"]
     costs = StaffingCosts(c["wage"], c["covers_per_labor_hour"], c["under_multiplier"])
-    return write(BacktestResult(pred, costs, old.get("padding", [])), results_dir, label)
+    cal_path = results_dir / "calibration.json"
+    calibration = json.loads(cal_path.read_text()) if cal_path.exists() else []
+    return write(BacktestResult(pred, costs, old.get("padding", []), [], calibration), results_dir, label)
 
 
 def _figure(hz, staff, path: Path, label: str) -> None:

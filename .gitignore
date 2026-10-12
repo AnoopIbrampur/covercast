@@ -13,3 +13,8 @@ artifacts/synthetic/
 # Real-data predictions carry Recruit's visitor counts, which the competition
 # rules don't allow redistributing. Summaries and figures are fine.
 artifacts/results/recruit*/predictions.csv.gz
+artifacts/results/recruit*/*/schedules.csv.gz
+artifacts/results/site_recruit/
+
+# Same page without the document shell, only used for publishing as an Artifact.
+site/body.html
