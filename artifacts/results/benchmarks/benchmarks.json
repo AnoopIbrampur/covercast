@@ -1,0 +1,53 @@
+{
+  "smoothing_params": {
+    "alpha": 0.1,
+    "alpha_dev": 0.1,
+    "phi": 0.9
+  },
+  "smoothing_val_rmsle": 0.5019776998790112,
+  "rmsle": {
+    "all": {
+      "mean4": 0.55388,
+      "smooth": 0.51392,
+      "model": 0.49802,
+      "model_pickup": 0.49803,
+      "pickup": 0.53833
+    },
+    "excluding collapse days (<35% of usual)": {
+      "mean4": 0.45818,
+      "smooth": 0.43398,
+      "model": 0.4219,
+      "model_pickup": 0.42196,
+      "pickup": 0.44355
+    },
+    "stores that take bookings": {
+      "mean4": 0.59263,
+      "smooth": 0.55136,
+      "model": 0.51572,
+      "model_pickup": 0.51556,
+      "pickup": 0.58011
+    }
+  },
+  "comparisons": {
+    "model vs smoothing": [
+      -0.01590402988237516,
+      -0.020607130958192867,
+      -0.011647323113855716
+    ],
+    "model+pickup vs model": [
+      6.674396827277551e-06,
+      -0.0003789633826651553,
+      0.00044201594945265926
+    ],
+    "pickup vs model (booking stores)": [
+      0.06439422721998944,
+      0.038738737792675296,
+      0.10975166523545772
+    ],
+    "model+pickup vs model (booking stores)": [
+      -0.00016181378600033103,
+      -0.0010702984055872972,
+      0.0008413468817952016
+    ]
+  }
+}

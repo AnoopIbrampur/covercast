@@ -1,0 +1,86 @@
+{
+  "effect": {
+    "dry (<1 mm)": {
+      "days": 12202.0,
+      "median covers vs usual": 1.0201945352328732
+    },
+    "rain 1-10 mm": {
+      "days": 5852.0,
+      "median covers vs usual": 1.0091431038714642
+    },
+    "rain >10 mm": {
+      "days": 2883.0,
+      "median covers vs usual": 0.9951458886066135
+    },
+    "evening rain >=3 mm": {
+      "days": 2104.0,
+      "median covers vs usual": 0.9661332607547318
+    },
+    "snow": {
+      "days": 610.0,
+      "median covers vs usual": 0.9678376690050974
+    },
+    "much colder than usual (<-5C)": {
+      "days": 1084.0,
+      "median covers vs usual": 0.9720895202736728
+    },
+    "much warmer than usual (>+5C)": {
+      "days": 610.0,
+      "median covers vs usual": 1.0200880294579264
+    }
+  },
+  "rmsle": {
+    "all": {
+      "store_days": 79546.0,
+      "base": 0.4980199818769888,
+      "ceiling": 0.4976025587168898,
+      "realistic": 0.49768774856800846
+    },
+    "1-3 days ahead": {
+      "store_days": 15621.0,
+      "base": 0.5197930032997179,
+      "ceiling": 0.5190697424290748,
+      "realistic": 0.5189989655654769
+    },
+    "rainy days (>=5 mm)": {
+      "store_days": 14234.0,
+      "base": 0.5174557721952849,
+      "ceiling": 0.5157574872129338,
+      "realistic": 0.5161063442577005
+    },
+    "rainy evenings (>=3 mm, 17-22h)": {
+      "store_days": 5511.0,
+      "base": 0.5139639774297393,
+      "ceiling": 0.5092102404224267,
+      "realistic": 0.511333235662373
+    },
+    "unusual temperature (|anomaly| > 5C)": {
+      "store_days": 7111.0,
+      "base": 0.5188415492966911,
+      "ceiling": 0.5182018619733612,
+      "realistic": 0.5180718207214368
+    }
+  },
+  "comparisons": {
+    "ceiling vs base": [
+      -0.0004174231600990175,
+      -0.0008621437275276409,
+      1.526211760603381e-05
+    ],
+    "realistic vs base": [
+      -0.0003322333089803564,
+      -0.0005777539005734994,
+      -7.557089208369978e-05
+    ],
+    "realistic vs base, 1-3 days ahead": [
+      -0.0007940377342410265,
+      -0.001530651420916615,
+      -6.745139207522128e-05
+    ],
+    "ceiling vs base, rainy days": [
+      -0.0016982849823511392,
+      -0.0032478113097404587,
+      -0.00021340555238950367
+    ]
+  }
+}

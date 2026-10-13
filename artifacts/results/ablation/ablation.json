@@ -1,0 +1,90 @@
+{
+  "full": {
+    "all": 0.49802,
+    "stores that take bookings": 0.51572,
+    "holiday or next to one": 0.57038,
+    "1-3 days ahead": 0.51979,
+    "8-14 days ahead": 0.50541,
+    "delta_vs_full": NaN,
+    "ci_low": NaN,
+    "ci_high": NaN,
+    "mean4 baseline, all": 0.55388
+  },
+  "without bookings": {
+    "all": 0.50654,
+    "stores that take bookings": 0.53871,
+    "holiday or next to one": 0.58717,
+    "1-3 days ahead": 0.53503,
+    "8-14 days ahead": 0.51099,
+    "delta_vs_full": 0.00853,
+    "ci_low": 0.00663,
+    "ci_high": 0.01029,
+    "mean4 baseline, all": 0.55388
+  },
+  "without holidays": {
+    "all": 0.50155,
+    "stores that take bookings": 0.5201,
+    "holiday or next to one": 0.61969,
+    "1-3 days ahead": 0.52771,
+    "8-14 days ahead": 0.50907,
+    "delta_vs_full": 0.00353,
+    "ci_low": 0.00273,
+    "ci_high": 0.0043,
+    "mean4 baseline, all": 0.55388
+  },
+  "without calendar (month, day of month)": {
+    "all": 0.49939,
+    "stores that take bookings": 0.51772,
+    "holiday or next to one": 0.57075,
+    "1-3 days ahead": 0.52034,
+    "8-14 days ahead": 0.50701,
+    "delta_vs_full": 0.00137,
+    "ci_low": 0.00078,
+    "ci_high": 0.00205,
+    "mean4 baseline, all": 0.55388
+  },
+  "without same-weekday history": {
+    "all": 0.52005,
+    "stores that take bookings": 0.54221,
+    "holiday or next to one": 0.61173,
+    "1-3 days ahead": 0.54706,
+    "8-14 days ahead": 0.52705,
+    "delta_vs_full": 0.02203,
+    "ci_low": 0.01982,
+    "ci_high": 0.02415,
+    "mean4 baseline, all": 0.55388
+  },
+  "without recent level and volatility": {
+    "all": 0.50729,
+    "stores that take bookings": 0.52602,
+    "holiday or next to one": 0.58491,
+    "1-3 days ahead": 0.52998,
+    "8-14 days ahead": 0.51447,
+    "delta_vs_full": 0.00927,
+    "ci_low": 0.00804,
+    "ci_high": 0.0105,
+    "mean4 baseline, all": 0.55388
+  },
+  "without store type, area, age": {
+    "all": 0.49929,
+    "stores that take bookings": 0.51669,
+    "holiday or next to one": 0.57646,
+    "1-3 days ahead": 0.52155,
+    "8-14 days ahead": 0.50686,
+    "delta_vs_full": 0.00127,
+    "ci_low": 0.00066,
+    "ci_high": 0.00188,
+    "mean4 baseline, all": 0.55388
+  },
+  "without lead time": {
+    "all": 0.49807,
+    "stores that take bookings": 0.51569,
+    "holiday or next to one": 0.56959,
+    "1-3 days ahead": 0.51963,
+    "8-14 days ahead": 0.50559,
+    "delta_vs_full": 5e-05,
+    "ci_low": -0.00014,
+    "ci_high": 0.00026,
+    "mean4 baseline, all": 0.55388
+  }
+}

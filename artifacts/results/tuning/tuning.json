@@ -1,0 +1,25 @@
+{
+  "validation_cutoffs": [
+    "2017-01-14",
+    "2017-01-21",
+    "2017-01-28",
+    "2017-02-04"
+  ],
+  "default_val_rmsle": 0.5011761428065263,
+  "best": {
+    "learning_rate": 0.05,
+    "max_iter": 800,
+    "max_leaf_nodes": 31,
+    "min_samples_leaf": 300,
+    "l2_regularization": 5.0,
+    "max_features": 0.5
+  },
+  "best_val_rmsle": 0.4993066201759455,
+  "test_rmsle_default": 0.4980199818769888,
+  "test_rmsle_tuned": 0.4966970971257949,
+  "test_diff": -0.001322884751193909,
+  "test_diff_ci": [
+    -0.0017850745104496177,
+    -0.0008687704092694802
+  ]
+}

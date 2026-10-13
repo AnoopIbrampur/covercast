@@ -18,6 +18,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Fetching weather from Open-Meteo (covercast.weather).
+weather = ["certifi>=2024.2"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
