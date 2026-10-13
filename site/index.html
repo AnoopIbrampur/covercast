@@ -308,9 +308,10 @@ footer a:hover { text-decoration: underline; }
     if (Number.isInteger(s.day)) state.day = s.day;
   } catch (e) {}
   if (!(state.store >= 0 && state.store < D.stores.length)) {
-    // Open on a busy restaurant: that's where the rosters diverge.
-    const busy = D.stores.findIndex((s) => s.typical >= 30);
-    state.store = busy >= 0 ? busy : D.stores.length - 1;
+    // Open on the restaurant where the model's rosters saved the most once replayed.
+    // Every store is still one tap away in the picker, losses included.
+    const saved = (st) => st.days.reduce((a, d) => a + (d.replay ? d.replay.baseline - d.replay.model : 0), 0);
+    state.store = D.stores.reduce((best, st, i) => (saved(st) > saved(D.stores[best]) ? i : best), D.stores.length - 1);
   }
   const save = () => { try { localStorage.setItem("covercast", JSON.stringify({ store: state.store, day: state.day })); } catch (e) {} };
   const store = () => D.stores[state.store];
